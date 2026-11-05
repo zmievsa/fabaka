@@ -1,40 +1,56 @@
 import Cocoa
 import Carbon.HIToolbox
 
-/// How long ⌘ must stay held before the Switcher appears. Same as AltTab's default.
-private let showDelay: TimeInterval = 0.1
-
 private let tapCallback: CGEventTapCallBack = { _, type, event, refcon in
     let controller = Unmanaged<SwitcherController>.fromOpaque(refcon!).takeUnretainedValue()
     return controller.handle(type, event)
 }
 
-/// Owns ⌘Tab: reads keys from an event tap and drives the Switcher.
+/// Owns ⌘Tab. Keys arrive on a dedicated thread, so a busy main thread can never delay a switch.
+/// Switching state lives on that thread; the panel lives on main.
 final class SwitcherController {
     private var tap: CFMachPort?
+    private var runLoop: CFRunLoop?
     private let panel = SwitcherPanel()
     private var switching = false
-    private var windows: [TrackedWindow] = []
+    private var windows: [WindowSnapshot] = []
     private var selection = 0
-    private var showTimer: Timer?
 
     init() {
-        panel.onClick = { [weak self] index in self?.commit(index) }
+        panel.onClick = { [weak self] index in self?.onKeyboardThread { $0.commit(index) } }
     }
 
     func start() -> Bool {
-        let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
-        guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
-                                          eventsOfInterest: CGEventMask(mask), callback: tapCallback,
-                                          userInfo: Unmanaged.passUnretained(self).toOpaque()) else {
-            log.error("Couldn't create the event tap. Is Accessibility granted?")
-            return false
+        let ready = DispatchSemaphore(value: 0)
+        var installed = false
+        let thread = Thread { [self] in
+            let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
+            tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
+                                    eventsOfInterest: CGEventMask(mask), callback: tapCallback,
+                                    userInfo: Unmanaged.passUnretained(self).toOpaque())
+            guard let tap else {
+                ready.signal()
+                return
+            }
+            runLoop = CFRunLoopGetCurrent()
+            CFRunLoopAddSource(runLoop, CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
+            CGEvent.tapEnable(tap: tap, enable: true)
+            installed = true
+            ready.signal()
+            CFRunLoopRun()
         }
-        self.tap = tap
-        CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
-        log.info("Event tap installed")
-        return true
+        thread.name = "flick.keyboard"
+        thread.qualityOfService = .userInteractive
+        thread.start()
+        ready.wait()
+        if installed { log.info("Event tap installed") } else { log.error("Couldn't create the event tap. Is Accessibility granted?") }
+        return installed
+    }
+
+    private func onKeyboardThread(_ work: @escaping (SwitcherController) -> Void) {
+        guard let runLoop else { return }
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.commonModes.rawValue) { work(self) }
+        CFRunLoopWakeUp(runLoop)
     }
 
     fileprivate func handle(_ type: CGEventType, _ event: CGEvent) -> Unmanaged<CGEvent>? {
@@ -76,23 +92,28 @@ final class SwitcherController {
     }
 
     private func begin(backward: Bool) {
-        windows = WindowTracker.shared.orderedWindows()
+        let started = mach_absolute_time()
+        windows = WindowTracker.shared.snapshot()
+        log.notice("window list \(msSince(started), format: .fixed(precision: 1), privacy: .public) ms, \(self.windows.count, privacy: .public) windows")
         guard !windows.isEmpty else { return }
         switching = true
         // The first row is usually the window you're on, so start one below it.
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         let start = windows.first?.pid == frontPID ? 1 : 0
         selection = backward ? windows.count - 1 : min(start, windows.count - 1)
-        showTimer = Timer.scheduledTimer(withTimeInterval: showDelay, repeats: false) { [weak self] _ in
-            guard let self, self.switching else { return }
-            self.panel.show(self.windows, selection: self.selection)
-        }
+        showPanel()
+    }
+
+    private func showPanel() {
+        let windows = windows, selection = selection
+        DispatchQueue.main.async { self.panel.show(windows, selection: selection) }
     }
 
     private func move(_ step: Int) {
         guard !windows.isEmpty else { return }
         selection = ((selection + step) % windows.count + windows.count) % windows.count
-        panel.select(selection)
+        let selection = selection
+        DispatchQueue.main.async { self.panel.select(selection) }
     }
 
     private func commit(_ index: Int) {
@@ -116,18 +137,16 @@ final class SwitcherController {
         dropRows { $0.pid == pid }
     }
 
-    private func dropRows(where predicate: (TrackedWindow) -> Bool) {
+    private func dropRows(where predicate: (WindowSnapshot) -> Bool) {
         windows.removeAll(where: predicate)
         if windows.isEmpty { return end() }
         selection = min(selection, windows.count - 1)
-        if panel.isVisible { panel.show(windows, selection: selection) }
+        showPanel()
     }
 
     private func end() {
         switching = false
-        showTimer?.invalidate()
-        showTimer = nil
-        panel.orderOut(nil)
         windows = []
+        DispatchQueue.main.async { self.panel.orderOut(nil) }
     }
 }

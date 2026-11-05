@@ -44,7 +44,7 @@ final class SwitcherPanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    func show(_ windows: [TrackedWindow], selection: Int) {
+    func show(_ windows: [WindowSnapshot], selection: Int) {
         rows.items = windows.map(Row.init)
         rows.selection = selection
         let screen = Self.activeScreen()
@@ -88,13 +88,12 @@ private struct Row {
     let isMinimized: Bool
     let isHidden: Bool
 
-    init(_ window: TrackedWindow) {
-        let app = NSRunningApplication(processIdentifier: window.pid)
-        icon = app?.icon
-        appName = app?.localizedName ?? ""
-        title = window.title.isEmpty ? appName : window.title
+    init(_ window: WindowSnapshot) {
+        icon = window.icon
+        appName = window.appName
+        title = window.title.isEmpty ? window.appName : window.title
         isMinimized = window.isMinimized
-        isHidden = app?.isHidden ?? false
+        isHidden = window.app.isHidden
     }
 }
 

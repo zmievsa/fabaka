@@ -16,10 +16,6 @@ _Avoid_: Thumbnails, previews, grid
 Windows sorted by when they last had focus, most recent first.
 _Avoid_: Z-order, stacking order, MRU
 
-**Quick switch**:
-A ⌘Tab released before the Switcher appears, which jumps to the previous window without showing anything.
-_Avoid_: Tap, fast switch
-
 **Selection**:
 The one row in the Window list that releasing ⌘ will focus.
 _Avoid_: Highlight, cursor

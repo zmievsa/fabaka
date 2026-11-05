@@ -5,7 +5,7 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
 ## Behavior
 
 - Hold ⌘ and press Tab to open the Switcher. Tab moves down, ⇧Tab moves up, and releasing ⌘ focuses the selected window.
-- If you release within 100 ms, nothing appears and you jump back to the previous window.
+- The Switcher appears the moment you press ⌘Tab. There are no built-in waits.
 - While the Switcher is open (⌘ still held):
   - ↑ ↓ ← → move the selection.
   - Return focuses the selected window, and Esc cancels.

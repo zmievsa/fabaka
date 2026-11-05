@@ -94,3 +94,10 @@ extension AXUIElement {
         return found
     }
 }
+
+/// Milliseconds since a `mach_absolute_time` reading. Used for latency logs.
+func msSince(_ start: UInt64) -> Double {
+    var info = mach_timebase_info_data_t()
+    mach_timebase_info(&info)
+    return Double(mach_absolute_time() - start) * Double(info.numer) / Double(info.denom) / 1_000_000
+}
