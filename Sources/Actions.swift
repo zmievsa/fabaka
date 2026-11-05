@@ -23,19 +23,24 @@ enum Actions {
             return
         }
         bringForward(window)
-        log.notice("focus: window server \(msSince(started), format: .fixed(precision: 1), privacy: .public) ms")
+        log.notice("focus \(window.appName, privacy: .public): window server \(msSince(started), format: .fixed(precision: 1), privacy: .public) ms")
+        Diagnostics.timeUntilFront(window, since: started)
         queue.async {
             let raise = mach_absolute_time()
             AXUIElementPerformAction(window.element, kAXRaiseAction as CFString)
-            log.notice("focus: app raise \(msSince(raise), format: .fixed(precision: 1), privacy: .public) ms")
+            log.notice("focus \(window.appName, privacy: .public): app raise \(msSince(raise), format: .fixed(precision: 1), privacy: .public) ms")
         }
     }
 
     private static func bringForward(_ window: WindowSnapshot) {
         var psn = ProcessSerialNumber()
+        let t0 = mach_absolute_time()
         getProcessForPID(window.pid, &psn)
+        let t1 = mach_absolute_time()
         _SLPSSetFrontProcessWithOptions(&psn, window.wid, kUserGeneratedFront)
+        let t2 = mach_absolute_time()
         makeKeyWindow(&psn, window.wid)
+        log.notice("focus split: psn \(Diagnostics.ms(t0, t1), format: .fixed(precision: 1), privacy: .public) ms, front \(Diagnostics.ms(t1, t2), format: .fixed(precision: 1), privacy: .public) ms, key \(msSince(t2), format: .fixed(precision: 1), privacy: .public) ms")
     }
 
     static func close(_ window: WindowSnapshot) {

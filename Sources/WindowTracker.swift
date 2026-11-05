@@ -84,7 +84,14 @@ final class WindowTracker {
     private let lock = NSLock()
     private var published: [WindowSnapshot] = []
 
+    private var dumpSignal: DispatchSourceSignal?
+
     func start() {
+        // `pkill -USR1 Flick` logs what Flick tracks, for debugging missing windows.
+        signal(SIGUSR1, SIG_IGN)
+        dumpSignal = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+        dumpSignal?.setEventHandler { [weak self] in self?.dump() }
+        dumpSignal?.resume()
         recency = Self.cgWindows(onScreenOnly: true).map(\.wid)
         for app in NSWorkspace.shared.runningApplications { watch(app, attempt: 0) }
 
@@ -158,6 +165,14 @@ final class WindowTracker {
         lock.lock()
         published = list
         lock.unlock()
+    }
+
+    private func dump() {
+        for (pid, info) in apps.sorted(by: { $0.value.name < $1.value.name }) {
+            let tracked = windows.values.filter { $0.pid == pid }.count
+            log.notice("dump \(info.name, privacy: .public) pid \(pid, privacy: .public): \(tracked, privacy: .public) windows")
+        }
+        log.notice("dump total \(self.windows.count, privacy: .public), published \(self.published.count, privacy: .public), recency \(self.recency.count, privacy: .public), rejected \(self.rejected.count, privacy: .public)")
     }
 
     // MARK: - Apps
@@ -237,13 +252,17 @@ final class WindowTracker {
 
     // MARK: - Windows
 
-    /// Reads a window's attributes. Nil for anything that isn't a normal window.
+    /// Reads a window's attributes. Nil for anything you wouldn't switch to. Same admission rule as AltTab's
+    /// WindowAdmissionResolver: standard windows, titled dialogs (Mail's viewer is one), and the app's main window.
     private static func candidate(_ element: AXUIElement) -> Candidate? {
-        guard let wid = element.windowID,
-              element.string(kAXRoleAttribute) == kAXWindowRole,
-              element.string(kAXSubroleAttribute) == kAXStandardWindowSubrole else { return nil }
-        return Candidate(wid: wid, element: element, title: element.string(kAXTitleAttribute) ?? "",
-                         isMinimized: element.bool(kAXMinimizedAttribute) ?? false)
+        guard let wid = element.windowID, element.string(kAXRoleAttribute) == kAXWindowRole else { return nil }
+        let subrole = element.string(kAXSubroleAttribute)
+        let title = element.string(kAXTitleAttribute) ?? ""
+        let admitted = subrole == kAXStandardWindowSubrole
+            || (subrole == kAXDialogSubrole && !title.isEmpty)
+            || (subrole != kAXFloatingWindowSubrole && subrole != "AXSystemDialog" && element.bool(kAXMainAttribute) == true)
+        guard admitted, isNormalLayer(wid) else { return nil }
+        return Candidate(wid: wid, element: element, title: title, isMinimized: element.bool(kAXMinimizedAttribute) ?? false)
     }
 
     private func adopt(_ candidate: Candidate, pid: pid_t) {
@@ -316,6 +335,12 @@ final class WindowTracker {
         let wid: CGWindowID
         let pid: pid_t
         let bounds: CGRect
+    }
+
+    /// Popups and helper surfaces sit above layer 0 even when they call themselves dialogs (Google Drive does).
+    private static func isNormalLayer(_ wid: CGWindowID) -> Bool {
+        guard let info = (CGWindowListCopyWindowInfo([.optionIncludingWindow], wid) as? [[String: Any]])?.first else { return false }
+        return (info[kCGWindowLayer as String] as? Int) == 0
     }
 
     private static let cacheLock = NSLock()
