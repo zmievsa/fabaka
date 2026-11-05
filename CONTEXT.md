@@ -1,0 +1,33 @@
+# Flick
+
+A personal macOS window switcher that replaces ⌘Tab. It behaves like AltTab as its one user set it up, minus window pictures.
+
+## Language
+
+**Switcher**:
+The panel that lists windows while ⌘ is held after pressing Tab.
+_Avoid_: Picker, overlay, HUD
+
+**Window list**:
+The rows the Switcher shows, one per window, each with the app icon, window title and app name.
+_Avoid_: Thumbnails, previews, grid
+
+**Recency order**:
+Windows sorted by when they last had focus, most recent first.
+_Avoid_: Z-order, stacking order, MRU
+
+**Quick switch**:
+A ⌘Tab released before the Switcher appears, which jumps to the previous window without showing anything.
+_Avoid_: Tap, fast switch
+
+**Selection**:
+The one row in the Window list that releasing ⌘ will focus.
+_Avoid_: Highlight, cursor
+
+**Excluded app**:
+An app whose windows never appear in the Window list.
+_Avoid_: Exception, blacklist, ignored app
+
+**Pass-through app**:
+An app that keeps ⌘Tab for itself while one of its windows is full screen, such as a remote desktop or VM viewer.
+_Avoid_: Exception, ignored app
