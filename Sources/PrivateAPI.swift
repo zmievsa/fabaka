@@ -23,6 +23,16 @@ func getProcessForPID(_ pid: pid_t, _ psn: UnsafeMutablePointer<ProcessSerialNum
 
 let kUserGeneratedFront: UInt32 = 0x200
 
+@_silgen_name("CGSMainConnectionID")
+func CGSMainConnectionID() -> Int32
+
+/// Spaces a window belongs to, filtered by a mask. Closing a window with `orderOut:` keeps its Space.
+@_silgen_name("CGSCopySpacesForWindows")
+func CGSCopySpacesForWindows(_ cid: Int32, _ mask: Int32, _ wids: CFArray) -> Unmanaged<CFArray>?
+
+/// Mask for Spaces currently shown on any display (includes-current | includes-user).
+let kCGSSpaceVisible: Int32 = 5
+
 /// Makes `wid` its app's key window with a synthetic mouse-down aimed far outside the window, so nothing
 /// inside it gets clicked. Byte layout copied from AltTab's `makeKeyWindow` (SkyLight.framework.swift).
 func makeKeyWindow(_ psn: inout ProcessSerialNumber, _ wid: CGWindowID) {

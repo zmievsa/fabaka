@@ -63,11 +63,6 @@ private let observerCallback: AXObserverCallback = { _, element, notification, _
     WindowTracker.shared.handle(element, notification as String)
 }
 
-/// Lists every window ID the WindowServer has. IDs only: asking for window details instead takes ~90 ms
-/// when a system service leaks thousands of windows (seen: 13,000 from CursorUIViewService).
-@_silgen_name("CGWindowListCreate")
-private func cgWindowListCreate(_ option: UInt32, _ relativeTo: CGWindowID) -> Unmanaged<CFArray>?
-
 /// Keeps every window of every app in Recency order. State lives on the main thread; the Switcher reads
 /// the published snapshot from its own thread.
 final class WindowTracker {
@@ -118,25 +113,27 @@ final class WindowTracker {
 
     // MARK: - Reading (any thread)
 
-    /// Windows in Recency order, minus any the WindowServer no longer has. Takes ~3 ms.
+    /// Windows in Recency order, minus any the WindowServer no longer has and any the app ordered out.
     func snapshot() -> [WindowSnapshot] {
         lock.lock()
         var list = published
         lock.unlock()
-        guard let ids = cgWindowListCreate(CGWindowListOption.optionAll.rawValue, kCGNullWindowID)?.takeRetainedValue() else { return list }
-        var ours = Set(list.map(\.wid))
-        var live = Set<CGWindowID>()
-        for i in 0..<CFArrayGetCount(ids) {
-            let wid = CGWindowID(UInt(bitPattern: CFArrayGetValueAtIndex(ids, i)))
-            if ours.remove(wid) != nil { live.insert(wid) }
-            if ours.isEmpty { break }
-        }
-        let dead = Set(list.map(\.wid)).subtracting(live)
+        guard !list.isEmpty, let onScreen = Self.onScreenStates(list.map(\.wid)) else { return list }
+        let dead = Set(list.map(\.wid)).filter { onScreen[$0] == nil }
         if !dead.isEmpty {
-            list.removeAll { dead.contains($0.wid) }
             DispatchQueue.main.async { for wid in dead { self.remove(wid) } }
         }
+        // Ordered-out windows stay tracked so they come back if the app shows them again.
+        list.removeAll { dead.contains($0.wid) || Self.isOrderedOut($0, onScreen: onScreen[$0.wid] == true) }
         return list
+    }
+
+    /// AltTab's phantom rule: a window that belongs to a visible Space but isn't on screen, without being
+    /// minimized or hidden with its app, was closed by an app that keeps it around (Shottr, Electron
+    /// `show: false`). Other-Space windows are off screen too, but their Space isn't visible.
+    private static func isOrderedOut(_ window: WindowSnapshot, onScreen: Bool) -> Bool {
+        guard !onScreen, !window.isMinimized, !window.app.isHidden else { return false }
+        return isOnVisibleSpace(window.wid)
     }
 
     /// Moves a window to the front of the Recency order right away, so the next ⌘Tab already sees it.
@@ -172,6 +169,8 @@ final class WindowTracker {
             let tracked = windows.values.filter { $0.pid == pid }.count
             log.notice("dump \(info.name, privacy: .public) pid \(pid, privacy: .public): \(tracked, privacy: .public) windows")
         }
+        let shown = snapshot().map { "\($0.appName): \($0.title)" }.joined(separator: " | ")
+        log.notice("dump shown \(shown, privacy: .public)")
         log.notice("dump total \(self.windows.count, privacy: .public), published \(self.published.count, privacy: .public), recency \(self.recency.count, privacy: .public), rejected \(self.rejected.count, privacy: .public)")
     }
 
@@ -341,6 +340,27 @@ final class WindowTracker {
     private static func isNormalLayer(_ wid: CGWindowID) -> Bool {
         guard let info = (CGWindowListCopyWindowInfo([.optionIncludingWindow], wid) as? [[String: Any]])?.first else { return false }
         return (info[kCGWindowLayer as String] as? Int) == 0
+    }
+
+    /// Whether each window is on screen, keyed by ID; windows the WindowServer no longer has are missing.
+    /// Asks only about the given windows (~0.4 ms), because listing all of them takes ~90 ms when a system
+    /// service leaks thousands (seen: 13,000 from CursorUIViewService).
+    static func onScreenStates(_ wids: [CGWindowID]) -> [CGWindowID: Bool]? {
+        // This call wants the IDs themselves as the array's values, not CFNumbers.
+        var values = wids.map { UnsafeRawPointer(bitPattern: UInt($0)) }
+        guard let ids = CFArrayCreate(nil, &values, values.count, nil),
+              let list = CGWindowListCreateDescriptionFromArray(ids) as? [[String: Any]] else { return nil }
+        var states: [CGWindowID: Bool] = [:]
+        for info in list {
+            guard let wid = info[kCGWindowNumber as String] as? CGWindowID else { continue }
+            states[wid] = (info[kCGWindowIsOnscreen as String] as? Bool) ?? false
+        }
+        return states
+    }
+
+    private static func isOnVisibleSpace(_ wid: CGWindowID) -> Bool {
+        let spaces = CGSCopySpacesForWindows(CGSMainConnectionID(), kCGSSpaceVisible, [wid] as CFArray)?.takeRetainedValue()
+        return (spaces as? [Any])?.isEmpty == false
     }
 
     private static let cacheLock = NSLock()
