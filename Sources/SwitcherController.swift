@@ -64,6 +64,7 @@ final class SwitcherController {
 
         if type == .flagsChanged {
             if switching && !command { commit(selection) }
+            if !switching && command && (key == kVK_Command || key == kVK_RightCommand) { SecureInput.logIfBlocking() }
             return Unmanaged.passUnretained(event)
         }
 

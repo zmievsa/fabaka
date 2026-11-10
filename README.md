@@ -21,6 +21,10 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
 
 Flick needs Accessibility only, never Screen Recording ([ADR 0001](docs/adr/0001-no-screen-capture.md)).
 
+## When ⌘Tab shows the system switcher instead
+
+macOS hides key presses from every app while Secure Input is on, so Flick can't see ⌘Tab. A focused password field turns it on for a moment, but it can get stuck on for the whole session, often after a background app turns it on and never off. Lock and unlock the Mac (⌃⌘Q) to clear it. `make logs` reports it the next time you press ⌘; the holder macOS names there is often just the front app.
+
 ## Install
 
 ```sh
