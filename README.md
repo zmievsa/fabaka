@@ -27,10 +27,20 @@ macOS hides key presses from every app while Secure Input is on, so Flick can't 
 
 ## Install
 
+Flick needs macOS 26 on Apple silicon.
+
 ```sh
-make install   # builds, signs with the Apple Development cert, copies to /Applications, starts it
-make uninstall # stops it and removes it
-make logs      # streams its log
+brew install zmievsa/tap/flick
+open /Applications/Flick.app
 ```
 
-Quit it with `pkill -x Flick`.
+Grant Accessibility when macOS asks. Flick starts working without a relaunch. Quit it with `pkill -x Flick`.
+
+## Build from source
+
+```sh
+make install   # builds, signs with your Developer ID or Apple Development cert if you have one, copies to /Applications, starts it
+make uninstall # stops it and removes it
+make logs      # streams its log
+make release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
+```
