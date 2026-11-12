@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+signal(SIGUSR1, SIG_IGN) // WindowTracker turns it into a debug dump once it starts.
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

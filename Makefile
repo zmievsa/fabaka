@@ -12,7 +12,7 @@ SIGN_ID ?= $(shell security find-identity -v -p codesigning | awk '/Developer ID
 SIGN_ID := $(or $(SIGN_ID),$(shell security find-identity -v -p codesigning | awk '/Apple Development/ {print $$2; exit}'))
 SIGN    := $(if $(SIGN_ID),--sign $(SIGN_ID) --options runtime --timestamp,--sign -)
 
-.PHONY: all install uninstall run logs clean release
+.PHONY: all install uninstall run logs clean release test
 
 all: $(BUNDLE)
 
@@ -59,3 +59,7 @@ release: clean all
 		-e "s/^  sha256 \".*\"/  sha256 \"$$(shasum -a 256 $(ZIP) | cut -d' ' -f1)\"/" build/tap/Casks/flick.rb
 	git -C build/tap commit -am "flick $(VERSION)"
 	git -C build/tap push
+
+# End-to-end tests against a stand-in busy app. Stops the installed Flick while they run.
+test:
+	Tests/run.sh $(TESTS)

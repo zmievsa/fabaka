@@ -73,6 +73,8 @@ final class WindowTracker {
     private var observers: [pid_t: AXObserver] = [:]
     private var apps: [pid_t: AppInfo] = [:]
     private var rejected: Set<CGWindowID> = []
+    /// Apps Flick is still waiting on to answer Accessibility.
+    private var registering: Set<pid_t> = []
     private let selfPID = getpid()
     private let discovery = DispatchQueue(label: "flick.discovery", qos: .userInitiated, attributes: .concurrent)
 
@@ -82,18 +84,18 @@ final class WindowTracker {
     private var dumpSignal: DispatchSourceSignal?
 
     func start() {
-        // `pkill -USR1 Flick` logs what Flick tracks, for debugging missing windows.
-        signal(SIGUSR1, SIG_IGN)
+        // `pkill -USR1 Flick` logs what Flick tracks, for debugging missing windows. main.swift ignores the
+        // signal from launch, so one sent before this point doesn't kill Flick.
         dumpSignal = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
         dumpSignal?.setEventHandler { [weak self] in self?.dump() }
         dumpSignal?.resume()
         recency = Self.cgWindows(onScreenOnly: true).map(\.wid)
-        for app in NSWorkspace.shared.runningApplications { watch(app, attempt: 0) }
+        for app in NSWorkspace.shared.runningApplications { watch(app) }
 
         let center = NSWorkspace.shared.notificationCenter
         center.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main) { [weak self] note in
             if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                self?.watch(app, attempt: 0)
+                self?.watch(app)
             }
         }
         center.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
@@ -176,31 +178,63 @@ final class WindowTracker {
 
     // MARK: - Apps
 
-    private func watch(_ app: NSRunningApplication, attempt: Int) {
+    /// Starts observing an app. Apps answer Accessibility only after a moment, and at login, with every app
+    /// starting at once, that moment can stretch past a minute, so Flick keeps asking for two minutes.
+    /// Activating the app asks again after that.
+    private func watch(_ app: NSRunningApplication, attempt: Int = 0) {
         let pid = app.processIdentifier
-        guard observers[pid] == nil, pid != selfPID, !app.isTerminated, !Rules.isExcluded(app),
-              app.activationPolicy != .prohibited else { return }
+        guard observers[pid] == nil, attempt > 0 || !registering.contains(pid), pid != selfPID, !app.isTerminated,
+              !Rules.isExcluded(app), app.activationPolicy != .prohibited else { return }
+        registering.insert(pid)
+        // Off the main thread: an app that doesn't answer holds each call for the full messaging timeout.
+        discovery.async {
+            let observer = Self.observe(pid)
+            DispatchQueue.main.async {
+                guard let observer else {
+                    guard attempt < 30, !app.isTerminated else {
+                        self.registering.remove(pid)
+                        if !app.isTerminated { log.notice("\(app.localizedName ?? "", privacy: .public) never answered Accessibility; activating it will try again") }
+                        return
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + min(0.5 * Double(attempt + 1), 5)) {
+                        self.watch(app, attempt: attempt + 1)
+                    }
+                    return
+                }
+                self.registering.remove(pid)
+                guard self.observers[pid] == nil, !app.isTerminated else { return }
+                self.started(app, observer)
+            }
+        }
+    }
+
+    /// An observer for the app's window notifications, or nil while the app doesn't answer.
+    private static func observe(_ pid: pid_t) -> AXObserver? {
         var observer: AXObserver?
-        guard AXObserverCreate(pid, observerCallback, &observer) == .success, let observer else { return }
+        guard AXObserverCreate(pid, observerCallback, &observer) == .success, let observer else { return nil }
         let appElement = AXUIElementCreateApplication(pid)
         var ready = false
         for name in appNotifications {
             let result = AXObserverAddNotification(observer, appElement, name as CFString, nil)
             if result == .success || result == .notificationAlreadyRegistered { ready = true }
         }
-        guard ready else {
-            // Freshly launched apps answer Accessibility only after a moment.
-            if attempt < 6 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 * Double(attempt + 1)) { [weak self] in
-                    self?.watch(app, attempt: attempt + 1)
-                }
-            }
-            return
-        }
+        return ready ? observer : nil
+    }
+
+    private func started(_ app: NSRunningApplication, _ observer: AXObserver) {
+        let pid = app.processIdentifier
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
         observers[pid] = observer
         apps[pid] = AppInfo(app: app, name: app.localizedName ?? "", icon: app.icon)
         discover(pid: pid, bruteForce: true)
+        // An app that is still starting answers before it has shown Accessibility all its windows, and never
+        // announces the ones that already exist. At login that left windows missing until you clicked the app.
+        for delay in [1.0, 2, 4, 8, 16, 32, 64] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                guard self.observers[pid] === observer else { return }
+                self.discover(pid: pid, bruteForce: true, retryRejected: true)
+            }
+        }
         // A launching app usually comes to the front before it answers Accessibility, so frontAppChanged
         // skipped it and its windows would land at the end of the Recency order.
         if NSWorkspace.shared.frontmostApplication?.processIdentifier == pid { promoteFocusedWindow(of: pid) }
@@ -211,13 +245,14 @@ final class WindowTracker {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
         }
         apps[pid] = nil
+        registering.remove(pid) // Its retries stop on their own, and a new app may reuse the pid.
         for (wid, window) in windows where window.pid == pid { remove(wid) }
         publish()
     }
 
     private func frontAppChanged(_ app: NSRunningApplication) {
         let pid = app.processIdentifier
-        guard observers[pid] != nil else { return }
+        guard observers[pid] != nil else { return watch(app) }
         promoteFocusedWindow(of: pid)
         discover(pid: pid, bruteForce: false)
     }
@@ -235,9 +270,11 @@ final class WindowTracker {
     }
 
     /// Finds the app's windows: the ones Accessibility lists, plus, when asked, other-Space windows the
-    /// WindowServer knows about but Accessibility hides.
-    private func discover(pid: pid_t, bruteForce: Bool) {
-        let known = Set(windows.values.filter { $0.pid == pid }.map(\.wid)).union(rejected)
+    /// WindowServer knows about but Accessibility hides. `retryRejected` looks again at windows that weren't
+    /// switchable last time, which an app that was still starting may have misreported.
+    private func discover(pid: pid_t, bruteForce: Bool, retryRejected: Bool = false) {
+        let tracked = Set(windows.values.filter { $0.pid == pid }.map(\.wid))
+        let known = retryRejected ? tracked : tracked.union(rejected)
         discovery.async {
             let appElement = AXUIElementCreateApplication(pid)
             var candidates = appElement.elements(kAXWindowsAttribute).compactMap(Self.candidate)

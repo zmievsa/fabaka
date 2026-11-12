@@ -42,5 +42,6 @@ Grant Accessibility when macOS asks. Flick starts working without a relaunch. Qu
 make install   # builds, signs with your Developer ID or Apple Development cert if you have one, copies to /Applications, starts it
 make uninstall # stops it and removes it
 make logs      # streams its log
+make test      # end-to-end tests against a stand-in busy app; stops the installed Flick for ~2 minutes
 make release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
 ```
