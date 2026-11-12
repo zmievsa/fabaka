@@ -201,6 +201,9 @@ final class WindowTracker {
         observers[pid] = observer
         apps[pid] = AppInfo(app: app, name: app.localizedName ?? "", icon: app.icon)
         discover(pid: pid, bruteForce: true)
+        // A launching app usually comes to the front before it answers Accessibility, so frontAppChanged
+        // skipped it and its windows would land at the end of the Recency order.
+        if NSWorkspace.shared.frontmostApplication?.processIdentifier == pid { promoteFocusedWindow(of: pid) }
     }
 
     private func forget(pid: pid_t) {
@@ -215,6 +218,11 @@ final class WindowTracker {
     private func frontAppChanged(_ app: NSRunningApplication) {
         let pid = app.processIdentifier
         guard observers[pid] != nil else { return }
+        promoteFocusedWindow(of: pid)
+        discover(pid: pid, bruteForce: false)
+    }
+
+    private func promoteFocusedWindow(of pid: pid_t) {
         discovery.async {
             let appElement = AXUIElementCreateApplication(pid)
             let focused = appElement.element(kAXFocusedWindowAttribute).flatMap(Self.candidate)
@@ -224,7 +232,6 @@ final class WindowTracker {
                 self.promoteOnMain(focused.wid)
             }
         }
-        discover(pid: pid, bruteForce: false)
     }
 
     /// Finds the app's windows: the ones Accessibility lists, plus, when asked, other-Space windows the
