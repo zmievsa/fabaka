@@ -1,7 +1,7 @@
 import Cocoa
 import os
 
-let log = Logger(subsystem: "com.zmievsa.flick", category: "flick")
+let log = Logger(subsystem: "com.zmievsa.fabaka", category: "fabaka")
 
 /// A row of the Switcher: a window, or a running app with no windows (`wid` is `kCGNullWindowID`), which the
 /// Dock still shows. Immutable, so any thread can read it.
@@ -79,15 +79,15 @@ final class WindowTracker {
     private var windows: [CGWindowID: TrackedWindow] = [:]
     private var recency: [CGWindowID] = []
     private var observers: [pid_t: AXObserver] = [:]
-    /// Every app Flick watches, including ones that never answer Accessibility.
+    /// Every app Fabaka watches, including ones that never answer Accessibility.
     private var apps: [pid_t: AppInfo] = [:]
     /// Apps by when they were last in front, most recent first.
     private var appRecency: [pid_t] = []
     private var rejected: Set<CGWindowID> = []
-    /// Apps Flick is still waiting on to answer Accessibility.
+    /// Apps Fabaka is still waiting on to answer Accessibility.
     private var registering: Set<pid_t> = []
     private let selfPID = getpid()
-    private let discovery = DispatchQueue(label: "flick.discovery", qos: .userInitiated, attributes: .concurrent)
+    private let discovery = DispatchQueue(label: "fabaka.discovery", qos: .userInitiated, attributes: .concurrent)
 
     private let lock = NSLock()
     private var published: [WindowSnapshot] = []
@@ -96,8 +96,8 @@ final class WindowTracker {
     private var dumpSignal: DispatchSourceSignal?
 
     func start() {
-        // `pkill -USR1 Flick` logs what Flick tracks, for debugging missing windows. main.swift ignores the
-        // signal from launch, so one sent before this point doesn't kill Flick.
+        // `pkill -USR1 Fabaka` logs what Fabaka tracks, for debugging missing windows. main.swift ignores the
+        // signal from launch, so one sent before this point doesn't kill Fabaka.
         dumpSignal = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
         dumpSignal?.setEventHandler { [weak self] in self?.dump() }
         dumpSignal?.resume()
@@ -205,7 +205,7 @@ final class WindowTracker {
     // MARK: - Apps
 
     /// Starts observing an app. Apps answer Accessibility only after a moment, and at login, with every app
-    /// starting at once, that moment can stretch past a minute, so Flick keeps asking for two minutes.
+    /// starting at once, that moment can stretch past a minute, so Fabaka keeps asking for two minutes.
     /// Activating the app asks again after that.
     private func watch(_ app: NSRunningApplication, attempt: Int = 0) {
         let pid = app.processIdentifier

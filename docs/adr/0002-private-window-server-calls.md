@@ -1,12 +1,12 @@
 # Private macOS calls for other Spaces and focus
 
-Flick lists and focuses windows on every Space, like AltTab. Public APIs can't do that: `kAXWindows` hides other-Space windows, and since macOS 14 `NSRunningApplication.activate` is only a request. So Flick uses the same private calls as AltTab and yabai:
+Fabaka lists and focuses windows on every Space, like AltTab. Public APIs can't do that: `kAXWindows` hides other-Space windows, and since macOS 14 `NSRunningApplication.activate` is only a request. So Fabaka uses the same private calls as AltTab and yabai:
 - `_AXUIElementCreateWithRemoteToken` brute force to reach other-Space windows
 - `_SLPSSetFrontProcessWithOptions` plus a synthetic `SLPSPostEventRecordTo` mouse-down to make a window key
 - `_AXUIElementGetWindow` to map Accessibility elements to window IDs
 - `CGSCopySpacesForWindows` to tell an other-Space window from one its app ordered out (AltTab's phantom rule)
 
-MacTab avoids these and only switches within the current Space. Flick rejected that because it doesn't match how AltTab behaves.
+MacTab avoids these and only switches within the current Space. Fabaka rejected that because it doesn't match how AltTab behaves.
 
 ## Consequences
 

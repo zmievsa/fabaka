@@ -2,8 +2,8 @@ import Cocoa
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window: two shelves of app icons. Stays holds Resident apps; Flickable holds every other app
-/// the Dock shows as running. Clicking an icon flicks it to the other shelf.
+/// The Settings window: two shelves of app icons. Stay holds Resident apps; Free to go holds every other app
+/// the Dock shows as running. Clicking an icon hops it to the other shelf.
 final class SettingsWindow {
     static let shared = SettingsWindow()
     private var window: NSWindow?
@@ -16,7 +16,7 @@ final class SettingsWindow {
             window.styleMask = [.titled, .closable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
-            window.title = "Flick Settings"
+            window.title = "Fabaka Settings"
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
             window.center()
@@ -37,8 +37,8 @@ struct ShelfApp: Identifiable, Equatable {
 }
 
 private final class ShelvesModel: ObservableObject {
-    @Published private(set) var stays: [ShelfApp] = []
-    @Published private(set) var flickable: [ShelfApp] = []
+    @Published private(set) var stay: [ShelfApp] = []
+    @Published private(set) var freeToGo: [ShelfApp] = []
     private var tokens: [NSObjectProtocol] = []
 
     init() {
@@ -68,13 +68,13 @@ private final class ShelvesModel: ObservableObject {
         }
         let residents = Residents.shared.bundleIDs
         // A resident that is neither running nor installed (Tailscale's other bundle) has nothing to show.
-        stays = residents.compactMap { id in
+        stay = residents.compactMap { id in
             if let app = running[id] { return ShelfApp(id: id, name: app.localizedName ?? id, icon: app.icon ?? Self.icon(id), isRunning: true) }
             guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { return nil }
             return ShelfApp(id: id, name: FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: ""),
                             icon: NSWorkspace.shared.icon(forFile: url.path), isRunning: false)
         }
-        flickable = running.filter { !residents.contains($0.key) }
+        freeToGo = running.filter { !residents.contains($0.key) }
             .map { ShelfApp(id: $0.key, name: $0.value.localizedName ?? $0.key, icon: $0.value.icon ?? Self.icon($0.key), isRunning: true) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -111,7 +111,7 @@ private final class ShelvesModel: ObservableObject {
 
 // MARK: - Views
 
-private let flick = Animation.spring(response: 0.42, dampingFraction: 0.68)
+private let hop = Animation.spring(response: 0.42, dampingFraction: 0.68)
 /// Residents are always on, so their shelf and running lights take the colour of a power LED.
 private let alwaysOn = Color(nsColor: .systemGreen)
 private let tileWidth: CGFloat = 84
@@ -127,18 +127,18 @@ private struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Who stays?")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text("When an app has no windows open, ⌘Tab still lists it so Q can quit it. Apps on the Stays shelf are always running for a reason, so they are left off that list.")
+                Text("When an app has no windows open, ⌘Tab still lists it so Q can quit it. Apps told to Stay are always running for a reason, so they are left off that list.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.bottom, 26)
 
-            Shelf(kind: .stays, apps: model.stays, namespace: shelves, model: model)
+            Shelf(kind: .stay, apps: model.stay, namespace: shelves, model: model)
                 .padding(.bottom, 22)
-            Shelf(kind: .flickable, apps: model.flickable, namespace: shelves, model: model)
+            Shelf(kind: .freeToGo, apps: model.freeToGo, namespace: shelves, model: model)
 
-            Label("Click an app to flick it to the other shelf. Drag apps from Finder onto Stays.", systemImage: "hand.tap")
+            Label("Click an app to move it to the other shelf. Drag apps from Finder onto Stay.", systemImage: "hand.tap")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .padding(.top, 18)
@@ -147,6 +147,19 @@ private struct SettingsView: View {
                 .padding(.vertical, 20)
 
             QuickTapDelay(milliseconds: $quickTapDelay)
+
+            Divider()
+                .padding(.vertical, 20)
+
+            HStack(alignment: .center) {
+                Text("Fabaka has no menu-bar icon. Open Fabaka again, from Spotlight or Finder, to come back here.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 16)
+                Button("Quit Fabaka") { NSApp.terminate(nil) }
+                    .controlSize(.small)
+            }
         }
         .padding(.horizontal, 28)
         .padding(.top, 40)
@@ -188,14 +201,14 @@ private struct QuickTapDelay: View {
 }
 
 private enum ShelfKind {
-    case stays, flickable
+    case stay, freeToGo
 
-    var title: String { self == .stays ? "Stays" : "Flickable" }
+    var title: String { self == .stay ? "Stay" : "Free to go" }
     var subtitle: String {
-        self == .stays ? "Always running, never offered to quit" : "Q quits them from ⌘Tab once their windows close"
+        self == .stay ? "Always running, never offered to quit" : "Q quits them from ⌘Tab once their windows close"
     }
     var empty: String {
-        self == .stays ? "Nothing stays. Every app with no windows can be quit from ⌘Tab."
+        self == .stay ? "Nothing stays. Every app with no windows can be quit from ⌘Tab."
             : "No other apps are running."
     }
 }
@@ -207,7 +220,7 @@ private struct Shelf: View {
     @ObservedObject var model: ShelvesModel
     @State private var targeted = false
 
-    private var tint: Color { kind == .stays ? alwaysOn : .primary }
+    private var tint: Color { kind == .stay ? alwaysOn : .primary }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -219,7 +232,7 @@ private struct Shelf: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 Spacer(minLength: 8)
-                if kind == .stays {
+                if kind == .stay {
                     Button(action: model.chooseApps) {
                         Label("Add App", systemImage: "plus")
                             .font(.system(size: 12, weight: .medium))
@@ -241,7 +254,7 @@ private struct Shelf: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: tileWidth, maximum: tileWidth), spacing: 6)], alignment: .leading, spacing: 8) {
                     ForEach(apps) { app in
                         Tile(app: app, kind: kind) {
-                            withAnimation(flick) { kind == .stays ? model.letGo(app.id) : model.keep(app.id) }
+                            withAnimation(hop) { kind == .stay ? model.letGo(app.id) : model.keep(app.id) }
                         }
                         .matchedGeometryEffect(id: app.id, in: namespace)
                     }
@@ -254,23 +267,23 @@ private struct Shelf: View {
         }
     }
 
-    /// Accepts icons dragged from the other shelf (as bundle IDs) and, on Stays, apps dragged from Finder.
+    /// Accepts icons dragged from the other shelf (as bundle IDs) and, on Stay, apps dragged from Finder.
     private func drop(_ providers: [NSItemProvider]) -> Bool {
         var accepted = false
         for provider in providers {
             if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                guard kind == .stays else { continue }
+                guard kind == .stay else { continue }
                 accepted = true
                 _ = provider.loadObject(ofClass: URL.self) { url, _ in
                     guard let url, url.pathExtension == "app" else { return }
-                    DispatchQueue.main.async { withAnimation(flick) { model.keep(appsAt: [url]) } }
+                    DispatchQueue.main.async { withAnimation(hop) { model.keep(appsAt: [url]) } }
                 }
             } else if provider.canLoadObject(ofClass: NSString.self) {
                 accepted = true
                 _ = provider.loadObject(ofClass: NSString.self) { id, _ in
                     guard let id = id as? String else { return }
                     DispatchQueue.main.async {
-                        withAnimation(flick) { kind == .stays ? model.keep(id) : model.letGo(id) }
+                        withAnimation(hop) { kind == .stay ? model.keep(id) : model.letGo(id) }
                     }
                 }
             }
@@ -315,15 +328,15 @@ private struct Tile: View {
                     .interpolation(.high)
                     .frame(width: iconSize, height: iconSize)
                     .opacity(app.isRunning ? 1 : 0.55)
-                    .rotationEffect(.degrees(wiggle ? 3.5 : (hovering && kind == .flickable ? -3.5 : 0)))
+                    .rotationEffect(.degrees(wiggle ? 3.5 : (hovering && kind == .freeToGo ? -3.5 : 0)))
                     .scaleEffect(hovering ? 1.08 : 1)
                     .shadow(color: .black.opacity(hovering ? 0.25 : 0.12), radius: hovering ? 6 : 3, y: hovering ? 4 : 2)
                     .overlay(alignment: .topTrailing) {
                         if hovering {
-                            Image(systemName: kind == .stays ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
+                            Image(systemName: kind == .stay ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
                                 .font(.system(size: 18))
                                 .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, kind == .stays ? Color.secondary : alwaysOn)
+                                .foregroundStyle(.white, kind == .stay ? Color.secondary : alwaysOn)
                                 .offset(x: 6, y: -6)
                                 .transition(.scale(scale: 0.4).combined(with: .opacity))
                         }
@@ -333,11 +346,11 @@ private struct Tile: View {
                     .foregroundStyle(app.isRunning ? .primary : .secondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                // The Dock's running dot; on Stays it's a lit pilot light.
+                // The Dock's running dot; on Stay it's a lit pilot light.
                 Circle()
-                    .fill(kind == .stays ? alwaysOn : Color.primary.opacity(0.55))
-                    .frame(width: kind == .stays ? 5 : 4, height: kind == .stays ? 5 : 4)
-                    .shadow(color: kind == .stays ? alwaysOn.opacity(0.9) : .clear, radius: 3)
+                    .fill(kind == .stay ? alwaysOn : Color.primary.opacity(0.55))
+                    .frame(width: kind == .stay ? 5 : 4, height: kind == .stay ? 5 : 4)
+                    .shadow(color: kind == .stay ? alwaysOn.opacity(0.9) : .clear, radius: 3)
                     .opacity(app.isRunning ? 1 : 0)
             }
             .frame(width: tileWidth)
@@ -345,14 +358,14 @@ private struct Tile: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(kind == .stays ? "\(app.name) stays. Click to let ⌘Tab offer to quit it."
+        .help(kind == .stay ? "\(app.name) stays. Click to let ⌘Tab offer to quit it."
                              : "Click to keep \(app.name) running: ⌘Tab won't offer to quit it.")
         .accessibilityLabel(app.name)
-        .accessibilityHint(kind == .stays ? "Moves it to Flickable" : "Moves it to Stays")
+        .accessibilityHint(kind == .stay ? "Moves it to Free to go" : "Moves it to Stay")
         .onHover { inside in
             withAnimation(.easeOut(duration: 0.15)) { hovering = inside }
-            // Flickable icons come loose under the pointer, like the Dock's jiggle.
-            if kind == .flickable {
+            // Free-to-go icons come loose under the pointer, like the Dock's jiggle.
+            if kind == .freeToGo {
                 if inside {
                     withAnimation(.easeInOut(duration: 0.11).repeatForever(autoreverses: true)) { wiggle = true }
                 } else {

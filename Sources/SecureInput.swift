@@ -1,7 +1,7 @@
 import Cocoa
 import Carbon.HIToolbox
 
-/// While any process has Secure Input on, macOS hides key presses from Flick, so ⌘Tab falls through to the
+/// While any process has Secure Input on, macOS hides key presses from Fabaka, so ⌘Tab falls through to the
 /// system switcher. It can get stuck on for the whole session; locking and unlocking the Mac clears that.
 enum SecureInput {
     /// Keyboard thread only.

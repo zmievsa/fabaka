@@ -3,7 +3,7 @@ import Cocoa
 /// Things the Switcher does to a window.
 enum Actions {
     /// Accessibility calls block until the target app answers, so they never run on the keyboard thread.
-    private static let queue = DispatchQueue(label: "flick.actions", qos: .userInteractive)
+    private static let queue = DispatchQueue(label: "fabaka.actions", qos: .userInteractive)
 
     /// Runs on the keyboard thread. The WindowServer calls come first and don't wait on the target app;
     /// only the raise inside the app's own window stack does, and that runs after, off this thread.

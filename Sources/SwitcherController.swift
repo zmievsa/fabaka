@@ -46,7 +46,7 @@ final class SwitcherController {
             ready.signal()
             CFRunLoopRun()
         }
-        thread.name = "flick.keyboard"
+        thread.name = "fabaka.keyboard"
         thread.qualityOfService = .userInteractive
         thread.start()
         ready.wait()

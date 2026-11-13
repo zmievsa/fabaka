@@ -1,4 +1,4 @@
-# Flick
+# Fabaka
 
 A personal macOS window switcher that replaces ⌘Tab. It behaves like AltTab as its one user set it up, minus window pictures.
 

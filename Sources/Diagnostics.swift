@@ -2,7 +2,7 @@ import Cocoa
 
 /// Temporary latency probes. Remove once switching speed is settled.
 enum Diagnostics {
-    private static let queue = DispatchQueue(label: "flick.diagnostics", qos: .utility)
+    private static let queue = DispatchQueue(label: "fabaka.diagnostics", qos: .utility)
 
     static func ms(_ a: UInt64, _ b: UInt64) -> Double {
         var info = mach_timebase_info_data_t()

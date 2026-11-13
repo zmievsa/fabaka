@@ -1,4 +1,4 @@
-# Flick
+# Fabaka
 
 A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, without screen capture, settings or a paid tier. Built after reading [MacTab](https://github.com/samuelcolvin/MacTab) and [AltTab](https://github.com/lwouis/alt-tab-macos).
 
@@ -16,32 +16,42 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
 - Most recently focused windows come first.
 - The Switcher appears on the screen of the focused window.
 - Fathom is never listed. Remote desktop and VM apps keep ⌘Tab while they are full screen.
-- Flick's few settings (Resident apps, and the quick-tap wait) sit behind its menu-bar icon. No auto-updates and no telemetry. It starts at login.
+- Fabaka has no menu-bar icon. Open Fabaka.app again (from Spotlight, Raycast or Finder) to get its few settings: Resident apps, the quick-tap wait, and a Quit button. No auto-updates and no telemetry. It starts at login.
 
 ## Resident apps
 
 Some apps run all the time on purpose: Tailscale keeps the VPN up, Ghostty answers its quick-terminal hotkey, macOS restarts Finder. With no windows open they aren't leftovers to quit, so ⌘Tab doesn't list them. Their windows are still listed.
 
-Open Settings from the menu-bar icon (or open Flick.app again) and click an app to move it between the Stays and Flickable shelves. Apps that aren't running can be dragged from Finder onto Stays. Finder, Tailscale and Ghostty stay by default.
+Open Fabaka.app again to get Settings, and click an app to move it between the Stay and Free to go shelves. Apps that aren't running can be dragged from Finder onto Stay. Finder, Tailscale and Ghostty stay by default.
 
 ## Permissions
 
-Flick needs Accessibility only, never Screen Recording ([ADR 0001](docs/adr/0001-no-screen-capture.md)).
+Fabaka needs Accessibility only, never Screen Recording ([ADR 0001](docs/adr/0001-no-screen-capture.md)).
 
 ## When ⌘Tab shows the system switcher instead
 
-macOS hides key presses from every app while Secure Input is on, so Flick can't see ⌘Tab. A focused password field turns it on for a moment, but it can get stuck on for the whole session, often after a background app turns it on and never off. Lock and unlock the Mac (⌃⌘Q) to clear it. `make logs` reports it the next time you press ⌘; the holder macOS names there is often just the front app.
+macOS hides key presses from every app while Secure Input is on, so Fabaka can't see ⌘Tab. A focused password field turns it on for a moment, but it can get stuck on for the whole session, often after a background app turns it on and never off. Lock and unlock the Mac (⌃⌘Q) to clear it. `make logs` reports it the next time you press ⌘; the holder macOS names there is often just the front app.
 
 ## Install
 
-Flick needs macOS 26 on Apple silicon.
+Fabaka needs macOS 26 on Apple silicon.
 
 ```sh
-brew install zmievsa/tap/flick
-open /Applications/Flick.app
+brew install zmievsa/tap/fabaka
+open /Applications/Fabaka.app
 ```
 
-Grant Accessibility when macOS asks. Flick starts working without a relaunch. Quit it with `pkill -x Flick`.
+Grant Accessibility when macOS asks. Fabaka starts working without a relaunch. Quit it from Settings, or with `pkill -x Fabaka`.
+
+### Coming from Flick
+
+Fabaka used to be called Flick. Fabaka carries Flick's settings over on first launch, but macOS asks for Accessibility again because it's a new app to macOS.
+
+```sh
+brew uninstall --cask flick
+brew install zmievsa/tap/fabaka
+open /Applications/Fabaka.app
+```
 
 ## Build from source
 
@@ -49,6 +59,6 @@ Grant Accessibility when macOS asks. Flick starts working without a relaunch. Qu
 make install   # builds, signs with your Developer ID or Apple Development cert if you have one, copies to /Applications, starts it
 make uninstall # stops it and removes it
 make logs      # streams its log
-make test      # end-to-end tests against a stand-in busy app; stops the installed Flick for ~2 minutes
+make test      # end-to-end tests against a stand-in busy app; stops the installed Fabaka for ~2 minutes
 make release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
 ```

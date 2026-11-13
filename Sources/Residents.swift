@@ -1,7 +1,7 @@
 import Cocoa
 
 extension Notification.Name {
-    static let residentsChanged = Notification.Name("FlickResidentsChanged")
+    static let residentsChanged = Notification.Name("FabakaResidentsChanged")
 }
 
 /// Resident apps: they are meant to run all the time, so the Switcher never offers them as windowless apps

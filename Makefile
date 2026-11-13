@@ -1,4 +1,4 @@
-APP     := Flick
+APP     := Fabaka
 BUNDLE  := build/$(APP).app
 BIN     := $(BUNDLE)/Contents/MacOS/$(APP)
 SDK     := $(shell xcrun --show-sdk-path)
@@ -16,12 +16,13 @@ SIGN    := $(if $(SIGN_ID),--sign $(SIGN_ID) --options runtime --timestamp,--sig
 
 all: $(BUNDLE)
 
-$(BUNDLE): $(SOURCES) Info.plist
-	@mkdir -p $(BUNDLE)/Contents/MacOS
+$(BUNDLE): $(SOURCES) Info.plist Resources/AppIcon.icns
+	@mkdir -p $(BUNDLE)/Contents/MacOS $(BUNDLE)/Contents/Resources
 	swiftc -O -swift-version 5 -target arm64-apple-macos26.0 -sdk $(SDK) \
 		-F $(SDK)/System/Library/PrivateFrameworks -framework SkyLight \
 		$(SOURCES) -o $(BIN)
 	cp Info.plist $(BUNDLE)/Contents/Info.plist
+	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/AppIcon.icns
 	codesign --force $(SIGN) $(BUNDLE)
 
 install: all
@@ -38,7 +39,7 @@ run: all
 	$(BIN)
 
 logs:
-	log stream --level debug --predicate 'subsystem == "com.zmievsa.flick"'
+	log stream --level debug --predicate 'subsystem == "com.zmievsa.fabaka"'
 
 clean:
 	rm -rf build
@@ -53,13 +54,17 @@ release: clean all
 	xcrun stapler staple $(BUNDLE)
 	spctl --assess --type execute -v $(BUNDLE)
 	ditto -c -k --keepParent $(BUNDLE) $(ZIP)
-	gh release create v$(VERSION) $(ZIP) --title "Flick $(VERSION)" --generate-notes
+	gh release create v$(VERSION) $(ZIP) --title "Fabaka $(VERSION)" --generate-notes
 	gh repo clone $(TAP) build/tap -- --depth 1
 	sed -i '' -e 's/^  version ".*"/  version "$(VERSION)"/' \
-		-e "s/^  sha256 \".*\"/  sha256 \"$$(shasum -a 256 $(ZIP) | cut -d' ' -f1)\"/" build/tap/Casks/flick.rb
-	git -C build/tap commit -am "flick $(VERSION)"
+		-e "s/^  sha256 \".*\"/  sha256 \"$$(shasum -a 256 $(ZIP) | cut -d' ' -f1)\"/" build/tap/Casks/fabaka.rb
+	git -C build/tap commit -am "fabaka $(VERSION)"
 	git -C build/tap push
 
-# End-to-end tests against a stand-in busy app. Stops the installed Flick while they run.
+# The app icon, from square artwork. Rerun after changing Resources/icon-art.png.
+Resources/AppIcon.icns: Resources/icon-art.png Resources/make-icon.swift
+	swift Resources/make-icon.swift Resources/icon-art.png $@
+
+# End-to-end tests against a stand-in busy app. Stops the installed Fabaka while they run.
 test:
 	Tests/run.sh $(TESTS)
