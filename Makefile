@@ -12,7 +12,7 @@ SIGN_ID ?= $(shell security find-identity -v -p codesigning | awk '/Developer ID
 SIGN_ID := $(or $(SIGN_ID),$(shell security find-identity -v -p codesigning | awk '/Apple Development/ {print $$2; exit}'))
 SIGN    := $(if $(SIGN_ID),--sign $(SIGN_ID) --options runtime --timestamp,--sign -)
 
-.PHONY: all install uninstall run logs clean release test
+.PHONY: all install uninstall run logs clean release test site
 
 all: $(BUNDLE)
 
@@ -68,3 +68,7 @@ Resources/AppIcon.icns: Resources/icon-art.png Resources/make-icon.swift
 # End-to-end tests against a stand-in busy app. Stops the installed Fabaka while they run.
 test:
 	Tests/run.sh $(TESTS)
+
+# Deploys site/public to fabaka.dev (Cloudflare Workers static assets).
+site:
+	cd site && npx -y wrangler@latest deploy

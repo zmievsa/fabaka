@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fabaka site: four directions</title>
+<style>
+  :root { --bg: #f4f4f7; --fg: #15151c; --muted: #5d5d6b; --card: #fff; --line: #e2e2ea; --accent: #5b5fe6; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111116; --fg: #ececf2; --muted: #a0a0ae; --card: #1b1b23; --line: #2a2a35; --accent: #8f93ff; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  p.lead { margin: 0 0 28px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap: 24px; }
+  article { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .frame { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .frame iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  .meta { padding: 14px 16px 16px; display: flex; gap: 16px; align-items: baseline; justify-content: space-between; }
+  .meta h2 { font-size: 16px; margin: 0; }
+  .meta p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+  .meta a { color: var(--accent); font-weight: 600; white-space: nowrap; text-decoration: none; }
+  .meta a:hover, .meta a:focus-visible { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <h1>fabaka.dev: four directions</h1>
+  <p class="lead">Each one is a working page; open it to try the demo.</p>
+  <div class="grid">
+    <article><div class="frame"><iframe src="1-commands/index.html" title="Dog commands" loading="lazy"></iframe></div>
+      <div class="meta"><div><h2>1 · Dog commands</h2><p>Fetch, Quiet, Drop it: each a live demo, with the speed readouts.</p></div><a href="1-commands/index.html" target="_blank">Open</a></div></article>
+    <article><div class="frame"><iframe src="2-herding/index.html" title="Herding" loading="lazy"></iframe></div>
+      <div class="meta"><div><h2>2 · Herding</h2><p>One sweep: the collie gathers every window into the list in under half a second.</p></div><a href="2-herding/index.html" target="_blank">Open</a></div></article>
+    <article><div class="frame"><iframe src="3-desktop/index.html" title="Desktop" loading="lazy"></iframe></div>
+      <div class="meta"><div><h2>3 · The page is a desktop</h2><p>A desktop you drive with ⌥Tab or Tab, W and Q.</p></div><a href="3-desktop/index.html" target="_blank">Open</a></div></article>
+    <article><div class="frame"><iframe src="5-keycaps/index.html" title="Keycaps" loading="lazy"></iframe></div>
+      <div class="meta"><div><h2>5 · Keycaps</h2><p>Press the giant keys; the list is there in the same frame.</p></div><a href="5-keycaps/index.html" target="_blank">Open</a></div></article>
+  </div>
+</main>
+<script>
+  const fit = () => document.querySelectorAll('.frame').forEach(f => {
+    f.querySelector('iframe').style.transform = `scale(${f.clientWidth / 1440})`;
+  });
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

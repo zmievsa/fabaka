@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en" class="nojs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fabaka: a better ⌘Tab for Mac</title>
+<meta name="description" content="A better ⌘Tab for Mac, fast and minimal: hold ⌘, press Tab, and every window is listed, most recent first. Free and open source.">
+<meta property="og:title" content="Fabaka: a better ⌘Tab for Mac">
+<meta property="og:description" content="Fast and minimal. Every window, most recent first.">
+<meta property="og:image" content="../../assets/fabaka-icon.png">
+<meta name="theme-color" content="#14163f">
+<link rel="icon" type="image/png" href="../../assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Fragment+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#14163f;
+  --sky-1:#171944;
+  --sky-2:#262a6e;
+  --ink:#f4f5ff;
+  --ink-2:#c5caf6;
+  --ink-3:#a3aae8;
+  --peri:#8e9bff;
+  --peri-soft:#b4bdff;
+  --widget:#101236;
+  --widget-line:rgb(180 189 255 / .16);
+  --accent:#4c59dc;
+  --panel:rgb(28 28 36 / .82);
+  --ease:cubic-bezier(.16,1,.3,1);
+  --display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --ui:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono:"Fragment Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --dockband:84px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--night);color:var(--ink);-webkit-text-size-adjust:100%;scrollbar-color:#3b4190 var(--night)}
+body{margin:0;font:400 17px/1.5 var(--ui);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:rgb(142 155 255 / .45);color:#fff}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--peri-soft);outline-offset:3px;border-radius:6px}
+button{font:inherit;color:inherit;cursor:pointer}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ───────── the desktop ───────── */
+.desk{
+  position:relative;isolation:isolate;overflow-x:clip;
+  min-height:max(700px,min(100svh,980px));
+  display:grid;
+  grid-template-columns:minmax(0,480px) minmax(0,1fr);
+  grid-template-rows:28px auto auto 1fr;
+  grid-template-areas:"menu menu" "hero stage" "install stage" "try stage";
+  column-gap:56px;
+  padding:0 40px 0 56px;
+}
+.wall{position:absolute;inset:0;z-index:-1;width:100%;height:100%;display:block}
+
+.menubar{
+  grid-area:menu;margin:0 -40px 0 -56px;padding:0 18px;
+  display:flex;align-items:center;gap:18px;height:28px;
+  background:rgb(10 11 36 / .55);
+  font:400 13px/1 var(--ui);color:#e7e9ff;white-space:nowrap;
+}
+.menubar .front{font-weight:700;min-width:4.5em}
+.menubar .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.spaces{display:flex;gap:4px}
+.spaces i{width:14px;height:9px;border-radius:2.5px;border:1.2px solid rgb(231 233 255 / .7)}
+.spaces i.on{background:#e7e9ff;border-color:#e7e9ff}
+
+.hero{grid-area:hero;padding-top:clamp(36px,7vh,76px)}
+h1{
+  margin:0;font:800 clamp(44px,4.6vw,66px)/.98 var(--display);
+  font-variation-settings:"opsz" 96;letter-spacing:-.035em;text-wrap:balance;color:#fff;
+}
+h1 .l{display:inline-block;white-space:nowrap}
+h1 .cmd{font-family:var(--ui);font-weight:600;letter-spacing:0;margin-right:-.03em}
+.lede{margin:22px 0 0;max-width:34ch;font-size:19px;line-height:1.45;color:var(--ink-2);text-wrap:pretty}
+.lede strong{color:#fff;font-weight:650}
+.note{margin:10px 0 0;max-width:46ch;font-size:13px;line-height:1.45;color:var(--ink-3)}
+
+.widget{
+  background:var(--widget);border:1px solid var(--widget-line);border-radius:22px;
+  box-shadow:0 18px 40px -12px rgb(0 0 0 / .55);
+}
+.install{grid-area:install;margin-top:36px;padding:16px 16px 14px}
+.whead{display:flex;align-items:center;gap:9px;font:600 13px/1 var(--ui);color:var(--ink)}
+.whead img{width:22px;height:22px;display:block}
+.whead .req{margin-left:auto;font-weight:400;color:var(--ink-3)}
+.cmdline{
+  margin:12px 0 14px;padding:12px 0;border-block:1px solid var(--widget-line);
+  font:400 14.5px/1.45 var(--mono);font-variant-ligatures:none;color:#e9ecff;overflow-wrap:anywhere;
+  user-select:all;-webkit-user-select:all;
+}
+.cmdline .p{color:var(--peri);user-select:none;-webkit-user-select:none;margin-right:.6ch}
+.wfoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.copy{
+  display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px 0 13px;border:0;border-radius:10px;
+  background:var(--peri-soft);color:#10123a;font:650 15px/1 var(--ui);
+  transition:background .15s, transform .15s var(--ease);
+}
+.copy:hover{background:#c8cfff}
+.copy:active{transform:translateY(1px)}
+.copy svg{width:16px;height:16px}
+.copy .ok{display:none}
+.copy.done .ok{display:block}.copy.done .cp{display:none}
+.gh{font:500 15px/1 var(--ui);color:var(--ink);text-decoration:underline;text-decoration-color:rgb(180 189 255 / .5);text-underline-offset:4px;text-decoration-thickness:1.5px}
+.gh:hover{text-decoration-color:var(--peri-soft)}
+
+.try{grid-area:try;align-self:start;margin:16px 0 32px;padding:14px 16px 16px}
+.tryrow{display:flex;gap:16px;align-items:flex-end}
+.keys{display:grid;gap:5px;flex:none}
+.krow{display:flex;gap:5px}
+.key{
+  position:relative;height:42px;min-width:42px;border:0;border-radius:7px;
+  background:linear-gradient(#f7f7fb,#e6e7ef);color:#24253a;
+  box-shadow:0 2px 0 #9a9db8, 0 3px 6px rgb(0 0 0 / .35);
+  font:500 11px/1 var(--ui);padding:0;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  transition:transform .06s, box-shadow .06s, background .1s;
+}
+.key .g{position:absolute;top:6px;right:7px;font-size:13px}
+.key .w{position:absolute;bottom:6px;left:7px}
+.key.l{font-size:16px;font-weight:600}
+.k-esc{width:52px;height:30px}
+.k-tab{width:66px}
+.k-opt{width:52px}
+.k-cmd{width:72px}
+.key.down{transform:translateY(2px);box-shadow:0 0 0 #9a9db8, 0 1px 2px rgb(0 0 0 / .35);background:linear-gradient(#c3caff,#aab3ff)}
+.key.off{opacity:.45}
+.hint{min-width:0;padding-bottom:2px}
+.hint b{display:block;font:650 16px/1.3 var(--ui);color:#fff}
+.hint span{display:block;margin-top:4px;font-size:14px;line-height:1.4;color:var(--ink-2)}
+.reset{margin-top:8px;padding:0;border:0;background:none;font:500 14px/1 var(--ui);color:var(--peri-soft);text-decoration:underline;text-underline-offset:3px}
+.reset[hidden]{display:none}
+
+/* ───────── stage: windows, dock, switcher ───────── */
+.stage{
+  grid-area:stage;position:relative;z-index:3;container-type:inline-size;
+  margin:24px 0 0;min-height:600px;
+}
+.stage:focus{outline:none}
+.space{position:absolute;inset:0 0 var(--dockband) 0;transition:transform .18s var(--ease), opacity .12s ease}
+.stage[data-space="1"] .space[data-s="2"]{transform:translateX(55%);opacity:0;pointer-events:none}
+.stage[data-space="2"] .space[data-s="1"]{transform:translateX(-55%);opacity:0;pointer-events:none}
+
+.win{
+  position:absolute;left:var(--x);top:var(--y);width:var(--w);height:var(--h);
+  display:flex;flex-direction:column;overflow:hidden;
+  border-radius:1.15cqw;background:#fbfbfd;
+  box-shadow:0 .8cqw 2.6cqw rgb(0 0 0 / .42), 0 0 0 1px rgb(10 12 40 / .35);
+  font-family:var(--ui);color:#24252f;
+  transform-origin:50% 60%;
+}
+.win.is-key{box-shadow:0 2.2cqw 5cqw rgb(0 0 0 / .55), 0 0 0 1px rgb(10 12 40 / .4)}
+.win.min,.win.gone{display:none}
+.tb{flex:none;height:3.3cqw;padding-block:.5cqw;display:flex;align-items:center;gap:1.2cqw;padding:0 1.3cqw;background:#ececf2;border-bottom:1px solid #d9dae3}
+.tl{display:flex;gap:.65cqw;flex:none}
+.tl b{width:1.15cqw;height:1.15cqw;border-radius:50%;background:#cdced8}
+.win.is-key .tl b:nth-child(1){background:#ef6a5f}
+.win.is-key .tl b:nth-child(2){background:#f1bf4e}
+.win.is-key .tl b:nth-child(3){background:#5fc464}
+.ttl{flex:1;text-align:center;font-size:1.3cqw;font-weight:600;color:#62636e;margin-right:4.5cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win.is-key .ttl{color:#33343f}
+.tab{height:2.1cqw;display:flex;align-items:center;gap:.7cqw;padding:0 1.2cqw;max-width:60%;border-radius:.6cqw;background:#fff;font-size:1.25cqw;font-weight:600;color:#62636e;white-space:nowrap;overflow:hidden;box-shadow:0 0 0 1px #dcdde6}
+.win.is-key .tab{color:#33343f}
+.tab i{flex:none;width:1.1cqw;height:1.1cqw;border-radius:.3cqw;background:#12a4a0}
+.bd{flex:1;min-height:0;overflow:hidden;position:relative}
+.bar{display:block;height:.85cqw;border-radius:.45cqw;background:#e1e2ea;width:var(--l,60%)}
+.web{padding:1.6cqw 2cqw;display:flex;flex-direction:column;gap:1.2cqw}
+.addr{height:2.2cqw;border-radius:1.1cqw;background:#f0f1f5;box-shadow:inset 0 0 0 1px #e1e2ea;width:70%;align-self:center;flex:none}
+.wh{font:800 2.6cqw/1 var(--display);letter-spacing:-.02em;color:#20212c}
+.pic{flex:none;height:9cqw;border-radius:1cqw;background:linear-gradient(180deg,#ffd59a 0 45%,#f59a6a 45% 60%,#2f8fb5 60%);position:relative;overflow:hidden}
+.pic::after{content:"";position:absolute;width:4cqw;height:4cqw;border-radius:50%;background:#fff3d6;left:62%;top:12%}
+.fl{display:grid;grid-template-columns:auto 1fr auto auto;gap:1.2cqw;align-items:center;padding:.9cqw 0;border-bottom:1px solid #e6e7ee;font-size:1.3cqw;font-weight:600;color:#30313d}
+.fl i{height:1px;background:#c9cad6}
+.fl em{font-style:normal;color:#5563e8;font-weight:700}
+.diff{border-radius:.8cqw;overflow:hidden;box-shadow:inset 0 0 0 1px #e1e2ea;display:grid;gap:0;padding:.6cqw 0}
+.diff span{display:block;height:1.9cqw;padding:0 1.2cqw;display:flex;align-items:center}
+.diff span::before{content:"";display:block;height:.75cqw;border-radius:.4cqw;width:var(--l,50%);background:#d5d6e0}
+.diff .del{background:#fde8e8}.diff .del::before{background:#f1a5a5}
+.diff .add{background:#e3f6e6}.diff .add::before{background:#93d29c}
+.pill{align-self:flex-start;padding:.5cqw 1.1cqw;border-radius:1cqw;background:#17824e;color:#fff;font-size:1.1cqw;font-weight:700}
+.docs{display:grid;grid-template-columns:22% 1fr;gap:2cqw;padding:1.6cqw 2cqw}
+.docs .side{display:flex;flex-direction:column;gap:1cqw;padding-top:.4cqw}
+.docs .main{display:flex;flex-direction:column;gap:1.1cqw}
+.code{height:7cqw;border-radius:.8cqw;background:#1f2033;flex:none}
+.ed{background:#1d1e2c;color:#cfd2ec;display:grid;grid-template-columns:24% 1fr}
+.ed .files{background:#181926;padding:1.4cqw 1.2cqw;display:flex;flex-direction:column;gap:.9cqw;font-size:1.15cqw;color:#8e92b8}
+.ed .files b{color:#e8eaff;font-weight:600}
+.ed pre{margin:0;font-variant-ligatures:none;padding:1.4cqw 1.8cqw;font:400 1.25cqw/1.75 var(--mono);white-space:pre;color:#cfd2ec}
+.ed .k{color:#c792ea}.ed .t{color:#ffcb6b}.ed .f{color:#82aaff}.ed .s{color:#c3e88d}.ed .c{color:#6b6f96}
+.md{padding:2cqw 2.4cqw;display:flex;flex-direction:column;gap:1.1cqw;background:#fff}
+.md .hd{height:1.6cqw;background:#3a3b4a;width:30%}
+.term{background:#15161d;padding:1.4cqw 1.8cqw;font:400 1.25cqw/1.7 var(--mono);color:#cfd3e6}
+.term .pr{color:#7ee08a}.term .cur{display:inline-block;width:.75cqw;height:1.35cqw;background:#cfd3e6;vertical-align:-.2cqw}
+.mail{display:grid;grid-template-columns:40% 1fr}
+.mail .lst{border-right:1px solid #e4e5ec;display:flex;flex-direction:column}
+.mail .m{padding:1.2cqw 1.4cqw;border-bottom:1px solid #eeeff4;display:grid;grid-template-columns:.9cqw 1fr;gap:.6cqw .9cqw;align-items:center}
+.mail .m i{width:.9cqw;height:.9cqw;border-radius:50%;background:transparent}
+.mail .m.u i{background:#3478f6}
+.mail .m .bar{grid-column:2}
+.mail .m .bar:first-of-type{background:#b9bbcb}
+.mail .m.u .bar:first-of-type{background:#5d6075}
+.mail .m.on{background:#3478f6}.mail .m.on .bar{background:rgb(255 255 255 / .7)}.mail .m.on i{background:#fff}
+.mail .rd{padding:2cqw;display:flex;flex-direction:column;gap:1.1cqw}
+.dz{display:grid;grid-template-columns:1fr 20%;background:#e9eaf0}
+.dz .canvas{display:grid;place-items:center;position:relative}
+.dz .art{width:42%;aspect-ratio:1;position:relative}
+.dz .art img{width:100%;height:100%;display:block}
+.dz .art::after{content:"";position:absolute;inset:-.5cqw;border:1.5px solid #ff8a3d}
+.dz .insp{background:#f7f7fa;border-left:1px solid #dfe0e8;padding:1.4cqw;display:flex;flex-direction:column;gap:1cqw}
+.dz .sw{display:flex;gap:.6cqw}.dz .sw i{width:1.8cqw;height:1.8cqw;border-radius:.4cqw}
+.chat{background:#f4f5f8;padding:2cqw;display:flex;flex-direction:column;gap:1.2cqw}
+.chat .bb{max-width:58%;padding:1.1cqw 1.4cqw;border-radius:1.4cqw;background:#fff;box-shadow:0 0 0 1px #e3e4ec;font-size:1.3cqw;color:#2b2c38}
+.chat .bb.me{align-self:flex-end;background:#17824e;color:#fff;box-shadow:none}
+.chat .who{font-size:1.05cqw;font-weight:700;color:#5b5e74;margin-bottom:-.6cqw}
+.notes{background:#fff8d9;padding:2cqw 2.4cqw;font-size:1.45cqw;line-height:1.9;color:#4a3d10}
+.notes .nh{margin:0 0 .4cqw;font:800 2.2cqw/1.1 var(--display);color:#2e2508}
+.notes ul{margin:0;padding-left:2.2cqw}
+
+/* the switch lands at once: the window is in front on the first frame; a ring fades so the eye finds it */
+.win.lift{animation:lift .3s ease-out}
+@keyframes lift{0%{box-shadow:0 2.2cqw 5cqw rgb(0 0 0 / .55), 0 0 0 1px rgb(10 12 40 / .4), 0 0 0 .45cqw rgb(180 189 255 / .85)}}
+.win.closing{animation:shut .12s ease-in forwards}
+@keyframes shut{to{transform:scale(.94);opacity:0}}
+
+.dock{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  display:flex;align-items:flex-end;gap:6px;padding:6px 8px;border-radius:20px;
+  background:#262b6c;box-shadow:0 0 0 1px rgb(255 255 255 / .12) inset, 0 10px 30px rgb(4 5 24 / .5);
+}
+.dk{position:relative;width:46px;height:46px;padding:0;border:0;background:none;border-radius:11px}
+.dk svg{width:100%;height:100%;display:block}
+.dk::after{content:"";position:absolute;left:50%;bottom:-5px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#e7e9ff;opacity:0}
+.dk.run::after{opacity:1}
+.dk:hover svg{transform:translateY(-3px)}
+.dk svg{transition:transform .2s var(--ease)}
+.dsep{width:1px;align-self:stretch;margin:4px 2px;background:rgb(255 255 255 / .2)}
+.thumb{width:46px;height:46px;display:grid;place-items:center;padding:0;border:0;background:none}
+.thumb[hidden]{display:none}
+.thumb i{display:block;width:40px;height:30px;border-radius:4px;background:#fff8d9;box-shadow:0 2px 6px rgb(0 0 0 / .4);position:relative;overflow:hidden}
+.thumb i::before{content:"";position:absolute;inset:0 0 auto;height:6px;background:#ececf2}
+.thumb i::after{content:"";position:absolute;left:5px;right:12px;top:11px;height:2px;background:#cdbd7f;box-shadow:0 5px 0 #cdbd7f,0 10px 0 #cdbd7f}
+
+.switcher{position:absolute;left:50%;top:calc((100% - var(--dockband)) / 2);transform:translate(-50%,-50%);z-index:80;display:none}
+.stage.is-open .switcher{display:block}
+.panel{
+  background:var(--panel);
+  -webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);
+  box-shadow:0 0 0 1px rgb(255 255 255 / .13) inset, 0 0 0 1px rgb(0 0 0 / .5), 0 30px 70px rgb(0 0 0 / .5);
+  color:#f3f3f8;
+}
+.list{width:min(600px,calc(100vw - 32px));padding:6px;border-radius:16px;display:flex;flex-direction:column;gap:0}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:11px;align-items:center;height:40px;padding:6px 12px 6px 7px;border-radius:8px;font:500 14px/1 var(--ui);cursor:pointer}
+.row:hover{background:rgb(255 255 255 / .07)}
+.row.sel,.row.sel:hover{background:var(--accent);color:#fff}
+.row .ic{width:28px;height:28px;display:block}
+.row .t{display:flex;align-items:center;gap:7px;min-width:0}
+.row .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t svg{flex:none;width:13px;height:13px;color:rgb(235 235 245 / .66)}
+.row.sel .t svg{color:#fff}
+.row .a{font-size:12px;color:rgb(235 235 245 / .64);white-space:nowrap}
+.row.sel .a{color:#fff}
+.row.dim .ic{opacity:.45}
+.row.nowin .t span{color:rgb(235 235 245 / .7)}
+.row.nowin.sel .t span{color:#fff}
+
+/* ───────── below the desktop ───────── */
+.more{background:var(--night);padding:104px 56px 120px}
+.more-in{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:132px 1fr;gap:56px}
+.more-in > img{width:132px;height:132px;display:block}
+.facts{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:36px 56px}
+.facts p{margin:0;max-width:44ch;font-size:17px;line-height:1.55;color:var(--ink-2);text-wrap:pretty}
+.facts b{display:block;margin-bottom:4px;font:700 21px/1.25 var(--display);letter-spacing:-.01em;color:#fff}
+
+/* ───────── narrower than a laptop: stack ───────── */
+@media (max-width:1099px){
+  .desk{grid-template-columns:minmax(0,1fr);grid-template-rows:28px auto auto auto auto;
+    grid-template-areas:"menu" "hero" "install" "stage" "try";padding:0 32px;min-height:0}
+  .menubar{margin:0 -32px}
+  .hero{padding-top:44px}
+  .lede{max-width:40ch}
+  .install{max-width:560px}
+  .stage{min-height:0;height:calc((100vw - 64px) * .74);margin-top:28px}
+  .try{max-width:560px;margin-top:20px;margin-bottom:40px}
+  .switcher{top:auto;bottom:calc(var(--dockband) - 20px);transform:translateX(-50%)}
+  .nojs .switcher{display:none}
+}
+@media (max-width:640px){
+  :root{--dockband:46px}
+  .desk{padding:0 16px}
+  .menubar{margin:0 -16px;padding:0 12px;gap:14px}
+  .menubar .items,.menubar .date{display:none}
+  .hero{padding-top:28px}
+  h1{font-size:clamp(34px,11.6vw,46px)}
+  .lede{margin-top:14px;font-size:16.5px}
+  .install{margin-top:22px;padding:13px 13px 12px;border-radius:18px}
+  .cmdline{font-size:13px;padding:10px 0;margin:10px 0 12px}
+  .whead .req{font-size:12px}
+  .stage{height:calc((100vw - 32px) * .86);margin-top:18px}
+  .dock{bottom:5px;gap:3px;padding:4px 5px;border-radius:12px}
+  .dk,.thumb{width:26px;height:26px;border-radius:7px}
+  .dk::after{bottom:-4px;width:3px;height:3px;margin-left:-1.5px}
+  .thumb i{width:23px;height:17px;border-radius:2px}
+  .thumb i::before{height:4px}.thumb i::after{left:3px;right:7px;top:7px;height:1.5px;box-shadow:0 3px 0 #cdbd7f,0 6px 0 #cdbd7f}
+  .switcher{bottom:calc(var(--dockband) - 8px)}
+  .list{padding:5px}
+  .row{height:40px}
+  .try{margin:14px 0 28px;padding:12px}
+  .tryrow{flex-direction:column;align-items:stretch;gap:12px}
+  .keys{gap:6px}.krow{gap:6px}
+  .key{height:52px;min-width:52px;font-size:12px}
+  .k-esc{width:60px;height:36px}
+  .k-tab{width:84px}.k-opt{width:62px}.k-cmd{width:104px}
+  .more{padding:72px 16px 88px}
+  .more-in{grid-template-columns:1fr;gap:28px}
+  .more-in > img{width:88px;height:88px}
+  .facts{grid-template-columns:1fr;gap:26px}
+  .facts b{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  </defs>
+  <symbol id="i-browser" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#12a4a0"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="16" cy="16" r="8.5"/><ellipse cx="16" cy="16" rx="3.6" ry="8.5"/><path d="M7.8 16h16.4"/></g></symbol>
+  <symbol id="i-mail" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#3478f6"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="7.5" y="10" width="17" height="12" rx="2"/><path d="M8.3 11.2 16 17l7.7-5.8"/></g></symbol>
+  <symbol id="i-editor" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#7c4dff"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.5 7 16l5 5.5M20 10.5l5 5.5-5 5.5M17.6 9.5l-3.2 13"/></g></symbol>
+  <symbol id="i-terminal" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#262833"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="none" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 4.6 4.6L9 20.2" stroke="#7ee08a"/><path d="M16 21h7" stroke="#fff"/></g></symbol>
+  <symbol id="i-notes" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#f5c542"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><rect x="0" y="0" width="32" height="8" rx="0" fill="#e2ae2a" opacity=".55"/><g fill="none" stroke="#7a5600" stroke-width="2" stroke-linecap="round"><path d="M9 14h14M9 18.5h14M9 23h8"/></g></symbol>
+  <symbol id="i-music" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#f2546b"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="#fff"><path d="M12.4 21.4V10.6l10.2-2.4v10.9" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="10.3" cy="21.6" r="2.6"/><circle cx="20.5" cy="19.3" r="2.6"/></g></symbol>
+  <symbol id="i-chat" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#2bb673"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><path d="M10 9.5h12a2.5 2.5 0 0 1 2.5 2.5v6.5a2.5 2.5 0 0 1-2.5 2.5h-6.5l-4.5 3.6V21H10a2.5 2.5 0 0 1-2.5-2.5V12A2.5 2.5 0 0 1 10 9.5Z" fill="#fff"/></symbol>
+  <symbol id="i-design" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#ff8a3d"/><rect width="32" height="32" rx="7.5" fill="url(#gl)"/><g fill="none" stroke="#fff" stroke-width="2"><circle cx="13" cy="13.5" r="5.2"/><rect x="15" y="15" width="9" height="9" rx="1.6" fill="#fff" fill-opacity=".3"/></g></symbol>
+  <symbol id="i-calendar" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#fbfbfd"/><path d="M0 7.5A7.5 7.5 0 0 1 7.5 0h17A7.5 7.5 0 0 1 32 7.5V10H0Z" fill="#ef4b4b"/><g fill="#3a3b48"><circle cx="10" cy="15" r="1.5"/><circle cx="16" cy="15" r="1.5"/><circle cx="22" cy="15" r="1.5"/><circle cx="10" cy="20.5" r="1.5"/><circle cx="16" cy="20.5" r="1.5" fill="#ef4b4b"/><circle cx="22" cy="20.5" r="1.5"/><circle cx="10" cy="26" r="1.5"/><circle cx="16" cy="26" r="1.5"/></g></symbol>
+  <symbol id="g-min" viewBox="0 0 14 14"><rect x="1.5" y="1.5" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 7h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+</svg>
+
+<main class="desk" id="desk">
+  <svg class="wall" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#14163d"/><stop offset=".55" stop-color="#262a6e"/><stop offset="1" stop-color="#4b56c6"/>
+      </linearGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#sky)"/>
+    <circle cx="1180" cy="250" r="120" fill="#6f7de6" opacity=".22"/>
+    <path d="M0 610C180 560 330 600 470 585 640 566 760 520 920 540 1090 560 1240 515 1440 530V900H0Z" fill="#6271dc" opacity=".55"/>
+    <path d="M0 680C150 640 300 660 450 690 620 724 780 650 960 655 1130 660 1270 700 1440 670V900H0Z" fill="#4351c2"/>
+    <path d="M0 760C210 720 380 745 560 770 760 798 940 735 1140 742 1290 748 1380 770 1440 765V900H0Z" fill="#2c3593"/>
+    <path d="M0 835C240 810 470 830 700 845 930 860 1180 818 1440 826V900H0Z" fill="#1b2063"/>
+  </svg>
+
+  <header class="menubar" aria-hidden="true">
+    <span class="front" id="front">Browser</span>
+    <span class="items">File&ensp;&ensp;Edit&ensp;&ensp;View&ensp;&ensp;Window&ensp;&ensp;Help</span>
+    <span class="right"><span class="spaces"><i class="on" id="sp1"></i><i id="sp2"></i></span><span class="date" id="date">Fri 13 Nov</span><span id="clock">9:41</span></span>
+  </header>
+
+  <div class="hero">
+    <h1><span class="l">A better <span class="cmd">⌘</span>Tab</span> <span class="l">for Mac.</span></h1>
+    <p class="lede"><strong>Fast and minimal.</strong> Hold ⌘, press Tab: every window, most recent first, ready in 1.6&nbsp;ms. Let go, and your pick is on top in 50&nbsp;ms.</p>
+    <p class="note">Medians over 617 presses in a week on the author’s M3 Pro. At the 95th percentile, the list takes 16&nbsp;ms.</p>
+  </div>
+
+  <section class="install widget" aria-label="Install">
+    <div class="whead"><img src="../../assets/fabaka-icon.webp" alt="" width="22" height="22">Fabaka<span class="req">macOS 26 · Apple silicon</span></div>
+    <div class="cmdline"><span class="p" aria-hidden="true">$</span><span id="cmd">brew install --cask zmievsa/tap/fabaka</span></div>
+    <div class="wfoot">
+      <button class="copy" id="copy" type="button">
+        <svg class="cp" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.2" y="5.2" width="8.3" height="8.3" rx="2"/><path d="M10.8 5.2V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5.3A1.5 1.5 0 0 0 4 10.8h1.2"/></svg>
+        <svg class="ok" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3.2 3L13 4.5"/></svg>
+        <span id="copylabel">Copy</span>
+      </button>
+      <a class="gh" href="https://github.com/zmievsa/fabaka">Source on GitHub</a>
+    </div>
+  </section>
+
+  <section class="try widget" aria-label="Try the switcher">
+    <div class="tryrow">
+      <div class="keys" aria-label="On-screen keys">
+        <div class="krow"><button type="button" class="key k-esc" data-k="esc" aria-label="Escape: cancel"><span class="w">esc</span></button></div>
+        <div class="krow">
+          <button type="button" class="key k-tab" data-k="tab" aria-label="Tab: open or move"><span class="g">⇥</span><span class="w">tab</span></button>
+          <button type="button" class="key l" data-k="q" aria-label="Q: quit app">Q</button>
+          <button type="button" class="key l" data-k="w" aria-label="W: close window">W</button>
+        </div>
+        <div class="krow">
+          <button type="button" class="key k-opt mod" data-k="opt" aria-label="Option: hold"><span class="g">⌥</span><span class="w">option</span></button>
+          <button type="button" class="key k-cmd mod" data-k="cmd" aria-label="Command: hold, release to switch"><span class="g">⌘</span><span class="w">command</span></button>
+        </div>
+      </div>
+      <div class="hint">
+        <b id="hint1">Release to switch.</b>
+        <span id="hint2">W closes the window, Q quits its app.</span>
+        <button type="button" class="reset" id="reset" hidden>Put everything back</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="stage is-open" id="stage" data-space="1" tabindex="-1" aria-label="Demo desktop">
+    <div class="space" data-s="1" aria-hidden="true">
+      <div class="win" data-w="docs" style="--x:0%;--y:0%;--w:50%;--h:52%;z-index:44">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="tab"><i></i>Docs · Getting started</span></div>
+        <div class="bd docs">
+          <div class="side"><i class="bar" style="--l:80%"></i><i class="bar" style="--l:60%"></i><i class="bar" style="--l:70%"></i><i class="bar" style="--l:50%"></i></div>
+          <div class="main"><div class="wh">Getting started</div><i class="bar" style="--l:92%"></i><i class="bar" style="--l:84%"></i><i class="bar" style="--l:60%"></i><div class="code"></div><i class="bar" style="--l:78%"></i><i class="bar" style="--l:66%"></i></div>
+        </div>
+      </div>
+      <div class="win" data-w="readme" style="--x:30%;--y:46%;--w:42%;--h:46%;z-index:43">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">README.md</span></div>
+        <div class="bd md"><i class="bar hd"></i><i class="bar" style="--l:88%"></i><i class="bar" style="--l:72%"></i><i class="bar" style="--l:80%"></i><i class="bar hd" style="width:22%;margin-top:1cqw"></i><i class="bar" style="--l:64%"></i><i class="bar" style="--l:76%"></i></div>
+      </div>
+      <div class="win" data-w="logo" style="--x:50%;--y:0%;--w:48%;--h:50%;z-index:45">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">Logo v4</span></div>
+        <div class="bd dz"><div class="canvas"><div class="art"><img src="../../assets/collie-art.webp" alt="" loading="lazy"></div></div><div class="insp"><i class="bar" style="--l:70%"></i><i class="bar" style="--l:90%"></i><span class="sw"><i style="background:#7385f0"></i><i style="background:#1c1c22"></i><i style="background:#fff;box-shadow:0 0 0 1px #d9dae3"></i></span><i class="bar" style="--l:60%"></i></div></div>
+      </div>
+      <div class="win" data-w="inbox" style="--x:56%;--y:57%;--w:42%;--h:38%;z-index:46">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">Inbox (3)</span></div>
+        <div class="bd mail">
+          <div class="lst"><div class="m u on"><i></i><i class="bar" style="--l:60%"></i><i class="bar" style="--l:90%"></i></div><div class="m u"><i></i><i class="bar" style="--l:45%"></i><i class="bar" style="--l:80%"></i></div><div class="m u"><i></i><i class="bar" style="--l:70%"></i><i class="bar" style="--l:85%"></i></div><div class="m"><i></i><i class="bar" style="--l:50%"></i><i class="bar" style="--l:75%"></i></div></div>
+          <div class="rd"><i class="bar" style="--l:55%;height:1.3cqw;background:#5d6075"></i><i class="bar" style="--l:90%"></i><i class="bar" style="--l:82%"></i><i class="bar" style="--l:88%"></i><i class="bar" style="--l:40%"></i></div>
+        </div>
+      </div>
+      <div class="win" data-w="zsh" style="--x:0%;--y:63%;--w:40%;--h:31%;z-index:47">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">~/code · zsh</span></div>
+        <div class="bd term"><span class="pr">~/code %</span> git switch fix-login<br>Switched to branch 'fix-login'<br><span class="pr">~/code %</span> <span class="cur"></span></div>
+      </div>
+      <div class="win" data-w="pr" style="--x:22%;--y:26%;--w:52%;--h:52%;z-index:48">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="tab"><i></i>PR #212 · fix login</span></div>
+        <div class="bd web"><div class="addr"></div><div class="wh">fix login</div><span class="pill">Open</span>
+          <div class="diff"><span style="--l:40%"></span><span class="del" style="--l:62%"></span><span class="del" style="--l:48%"></span><span class="add" style="--l:66%"></span><span class="add" style="--l:52%"></span><span class="add" style="--l:30%"></span><span style="--l:44%"></span></div>
+        </div>
+      </div>
+      <div class="win" data-w="swift" style="--x:42%;--y:11%;--w:54%;--h:50%;z-index:49">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">app.swift</span></div>
+        <div class="bd ed"><div class="files"><b>app.swift</b><span>README.md</span><span>Window.swift</span></div>
+<pre><span class="k">struct</span> <span class="t">Switcher</span> {
+  <span class="k">var</span> windows: [<span class="t">Window</span>]
+
+  <span class="k">func</span> <span class="f">focus</span>(_ w: <span class="t">Window</span>) {
+    w.<span class="f">raise</span>()
+  }
+}</pre></div>
+      </div>
+      <div class="win is-key" data-w="flights" style="--x:6%;--y:8%;--w:52%;--h:56%;z-index:50">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="tab"><i></i>Flights to Lisbon</span></div>
+        <div class="bd web"><div class="addr"></div><div class="pic"></div><div class="wh">Lisbon</div>
+          <div class="fl"><span>07:40</span><i></i><span>10:15</span><em>Pick</em></div>
+          <div class="fl"><span>12:05</span><i></i><span>14:40</span><em>Pick</em></div>
+          <div class="fl"><span>18:30</span><i></i><span>21:05</span><em>Pick</em></div>
+        </div>
+      </div>
+      <div class="win min" data-w="groceries" style="--x:30%;--y:14%;--w:40%;--h:58%;z-index:41">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">Groceries</span></div>
+        <div class="bd notes"><div class="nh">Groceries</div><ul><li>Oranges</li><li>Bread</li><li>Coffee beans</li><li>Eggs</li></ul></div>
+      </div>
+    </div>
+    <div class="space" data-s="2" aria-hidden="true">
+      <div class="win" data-w="team" style="--x:16%;--y:8%;--w:66%;--h:72%;z-index:42">
+        <div class="tb"><i class="tl"><b></b><b></b><b></b></i><span class="ttl">Team</span></div>
+        <div class="bd chat"><span class="who">Ana</span><span class="bb">Login fix is up, PR #212</span><span class="bb me">Looking now</span><span class="who">Ben</span><span class="bb">Logo v4 is in the shared folder</span></div>
+      </div>
+    </div>
+
+    <nav class="dock" aria-label="Dock">
+      <button type="button" class="dk run" data-app="browser" aria-label="Browser"><svg><use href="#i-browser"/></svg></button>
+      <button type="button" class="dk run" data-app="mail" aria-label="Mail"><svg><use href="#i-mail"/></svg></button>
+      <button type="button" class="dk run" data-app="editor" aria-label="Editor"><svg><use href="#i-editor"/></svg></button>
+      <button type="button" class="dk run" data-app="terminal" aria-label="Terminal"><svg><use href="#i-terminal"/></svg></button>
+      <button type="button" class="dk run" data-app="notes" aria-label="Notes"><svg><use href="#i-notes"/></svg></button>
+      <button type="button" class="dk run" data-app="music" aria-label="Music"><svg><use href="#i-music"/></svg></button>
+      <button type="button" class="dk run" data-app="chat" aria-label="Chat"><svg><use href="#i-chat"/></svg></button>
+      <button type="button" class="dk run" data-app="design" aria-label="Design"><svg><use href="#i-design"/></svg></button>
+      <button type="button" class="dk" data-app="calendar" aria-label="Calendar"><svg><use href="#i-calendar"/></svg></button>
+      <span class="dsep" aria-hidden="true"></span>
+      <button type="button" class="thumb" id="mthumb" aria-label="Groceries, minimized"><i></i></button>
+    </nav>
+
+    <div class="switcher" id="switcher">
+      <div class="panel list" role="listbox" aria-label="Windows" id="panel">
+        <div class="row" role="option"><svg class="ic"><use href="#i-browser"/></svg><span class="t"><span>Flights to Lisbon</span></span><span class="a">Browser</span></div>
+        <div class="row sel" role="option" aria-selected="true"><svg class="ic"><use href="#i-editor"/></svg><span class="t"><span>app.swift</span></span><span class="a">Editor</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-browser"/></svg><span class="t"><span>PR #212 · fix login</span></span><span class="a">Browser</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-terminal"/></svg><span class="t"><span>~/code · zsh</span></span><span class="a">Terminal</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-mail"/></svg><span class="t"><span>Inbox (3)</span></span><span class="a">Mail</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-design"/></svg><span class="t"><span>Logo v4</span></span><span class="a">Design</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-browser"/></svg><span class="t"><span>Docs · Getting started</span></span><span class="a">Browser</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-editor"/></svg><span class="t"><span>README.md</span></span><span class="a">Editor</span></div>
+        <div class="row" role="option"><svg class="ic"><use href="#i-chat"/></svg><span class="t"><span>Team</span></span><span class="a">Chat</span></div>
+        <div class="row dim" role="option"><svg class="ic"><use href="#i-notes"/></svg><span class="t"><span>Groceries</span><svg aria-label="minimized"><use href="#g-min"/></svg></span><span class="a">Notes</span></div>
+        <div class="row nowin" role="option"><svg class="ic"><use href="#i-music"/></svg><span class="t"><span>Music</span></span><span class="a">No windows</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="sr" aria-live="polite" id="live"></p>
+</main>
+
+<section class="more" aria-label="Details">
+  <div class="more-in">
+    <img src="../../assets/fabaka-icon.webp" alt="Fabaka app icon: a border collie peeking over an edge" width="132" height="132" loading="lazy">
+    <div class="facts">
+      <p><b>Every Space, every screen.</b>Minimized and hidden windows included.</p>
+      <p><b>Apps left running with no windows are listed too.</b>Q cleans them up.</p>
+      <p><b>No Screen Recording permission, ever.</b>Accessibility only: icons and titles, no window thumbnails.</p>
+      <p><b>Free and open source (MIT).</b>No account, no telemetry, no menu-bar icon.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  document.documentElement.classList.remove('nojs');
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const touch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+  const NAME = {browser:'Browser', mail:'Mail', editor:'Editor', terminal:'Terminal', notes:'Notes', music:'Music', chat:'Chat', design:'Design', calendar:'Calendar'};
+  const WINS = [
+    {id:'flights', app:'browser', title:'Flights to Lisbon', space:1},
+    {id:'swift', app:'editor', title:'app.swift', space:1},
+    {id:'pr', app:'browser', title:'PR #212 · fix login', space:1},
+    {id:'zsh', app:'terminal', title:'~/code · zsh', space:1},
+    {id:'inbox', app:'mail', title:'Inbox (3)', space:1},
+    {id:'logo', app:'design', title:'Logo v4', space:1},
+    {id:'docs', app:'browser', title:'Docs · Getting started', space:1},
+    {id:'readme', app:'editor', title:'README.md', space:1},
+    {id:'team', app:'chat', title:'Team', space:2},
+    {id:'groceries', app:'notes', title:'Groceries', space:1, min:true},
+  ];
+  const APPS = ['browser','editor','terminal','mail','design','chat','notes','music'];
+
+  const stage = $('#stage'), panel = $('#panel'), live = $('#live');
+  const winEl = Object.fromEntries($$('.win').map(e => [e.dataset.w, e]));
+  const keyEl = Object.fromEntries($$('.key').map(e => [e.dataset.k, e]));
+  let S;
+  const fresh = () => {
+    S = {wins: WINS.map(w => ({min:false, closed:false, ...w})), apps:[...APPS], running:new Set(APPS),
+         space:1, front:'browser', open:false, sel:0, dirty:false};
+  };
+  fresh();
+
+  // ── model ──
+  const liveWins = () => S.wins.filter(w => !w.closed && S.running.has(w.app));
+  function items() {
+    const ws = liveWins();
+    const rows = ws.map(w => ({kind:'win', w, app:w.app}));
+    for (const a of S.apps) if (S.running.has(a) && !ws.some(w => w.app === a)) rows.push({kind:'app', app:a});
+    return rows;
+  }
+  const bumpApp = a => { S.apps = [a, ...S.apps.filter(x => x !== a)]; S.front = a; };
+
+  // ── render ──
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const icon = (a, cls = 'ic') => `<svg class="${cls}" aria-hidden="true"><use href="#i-${a}"/></svg>`;
+  function renderSwitcher() {
+    stage.classList.toggle('is-open', S.open);
+    if (!S.open) return;
+    panel.innerHTML = items().map((r, i) => {
+      const sel = i === S.sel ? ' sel' : '';
+      if (r.kind === 'app') return `<div class="row nowin${sel}" role="option" aria-selected="${!!sel}" data-i="${i}">${icon(r.app)}<span class="t"><span>${NAME[r.app]}</span></span><span class="a">No windows</span></div>`;
+      const g = r.w.min ? '<svg aria-label="minimized"><use href="#g-min"/></svg>' : '';
+      return `<div class="row${r.w.min ? ' dim' : ''}${sel}" role="option" aria-selected="${!!sel}" data-i="${i}">${icon(r.app)}<span class="t"><span>${esc(r.w.title)}</span>${g}</span><span class="a">${NAME[r.app]}</span></div>`;
+    }).join('');
+  }
+  function renderStage(opts = {}) {
+    stage.dataset.space = S.space;
+    $('#sp1').classList.toggle('on', S.space === 1);
+    $('#sp2').classList.toggle('on', S.space === 2);
+    S.wins.forEach((w, i) => {
+      const el = winEl[w.id];
+      el.style.zIndex = String(50 - i);
+      el.classList.toggle('min', w.min);
+      if (!el.classList.contains('closing')) el.classList.toggle('gone', w.closed || !S.running.has(w.app));
+    });
+    const top = liveWins().find(w => !w.min && w.space === S.space);
+    if (!S.running.has(S.front)) S.front = top ? top.app : 'music';
+    for (const [id, el] of Object.entries(winEl)) el.classList.toggle('is-key', !!top && top.id === id && top.app === S.front);
+    $('#front').textContent = S.running.has(S.front) ? NAME[S.front] : 'Finder';
+    $$('.dk').forEach(d => d.classList.toggle('run', S.running.has(d.dataset.app)));
+    const g = S.wins.find(w => w.id === 'groceries');
+    $('#mthumb').hidden = !(g.min && !g.closed && S.running.has('notes'));
+    $('#reset').hidden = !S.dirty;
+    for (const id of [].concat(opts.lift || [])) {
+      const el = winEl[id];
+      el.classList.remove('lift'); void el.offsetWidth; el.classList.add('lift');
+    }
+  }
+  Object.values(winEl).forEach(el => el.addEventListener('animationend', e => {
+    if (e.animationName === 'lift') el.classList.remove('lift');
+    if (e.animationName === 'shut') { el.classList.remove('closing'); renderStage(); }
+  }));
+
+  // ── hint ──
+  let stolen = false;
+  function hint() {
+    const h1 = $('#hint1'), h2 = $('#hint2');
+    if (S.open) {
+      h1.textContent = mod.ptr === 'latched' ? (touch ? 'Tap ⌘ or a row to switch.' : 'Return or ⌘ to switch.') : 'Release to switch.';
+      h2.textContent = 'W closes the window, Q quits its app.';
+    } else if (mod.ptr || mod.alt) {
+      h1.textContent = touch ? 'Now tap Tab.' : 'Now press Tab.';
+      h2.textContent = '';
+    } else if (stolen) {
+      h1.textContent = 'macOS keeps ⌘Tab. Use ⌥ here.';
+      h2.textContent = 'Hold ⌥ and press Tab.';
+    } else {
+      h1.textContent = touch ? 'Hold ⌘, tap Tab.' : 'Hold ⌥ and press Tab.';
+      h2.textContent = touch ? 'Let go to switch.' : 'Or click the keys.';
+    }
+    keyEl.w.classList.toggle('off', !S.open);
+    keyEl.q.classList.toggle('off', !S.open);
+    keyEl.esc.classList.toggle('off', !S.open);
+  }
+  const say = t => { live.textContent = t; };
+  const label = r => r ? (r.kind === 'win' ? `${r.w.title}, ${NAME[r.app]}${r.w.min ? ', minimized' : ''}` : `${NAME[r.app]}, no windows`) : '';
+
+  // ── switcher actions ──
+  function openSwitcher() {
+    const n = items().length;
+    if (!n) return;
+    S.open = true; S.sel = n > 1 ? 1 : 0; stolen = false;
+    renderSwitcher(); hint();
+    say(`Switcher open. ${label(items()[S.sel])}. Tab moves, Return switches, Escape closes.`);
+  }
+  function move(d) {
+    const n = items().length; if (!n) return;
+    S.sel = (S.sel + d + n) % n; renderSwitcher(); say(label(items()[S.sel]));
+  }
+  function closeSwitcher() { S.open = false; mod.ptr = null; renderSwitcher(); setKeys(); hint(); }
+  function commit() {
+    const r = items()[S.sel];
+    closeSwitcher();
+    if (!r) return;
+    if (r.kind === 'win') focusWin(r.w); else activateApp(r.app);
+  }
+  function focusWin(w) {
+    const wasMin = w.min, from = wasMin ? $('#mthumb').getBoundingClientRect() : null;
+    w.min = false;
+    S.wins = [w, ...S.wins.filter(x => x !== w)];
+    bumpApp(w.app);
+    S.space = w.space;
+    renderStage({lift: wasMin ? [] : w.id});
+    if (wasMin && !reduce) {
+      const el = winEl[w.id], to = el.getBoundingClientRect();
+      el.animate([
+        {transformOrigin:'0 0', transform:`translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`, opacity:.5},
+        {transformOrigin:'0 0', transform:'none', opacity:1}
+      ], {duration:150, easing:'cubic-bezier(.16,1,.3,1)'});
+    }
+    say(`${w.title} is in front.`);
+  }
+  function activateApp(a) {
+    const ws = liveWins().filter(w => w.app === a && !w.min);
+    S.wins = [...ws, ...S.wins.filter(w => !ws.includes(w))];
+    bumpApp(a);
+    if (ws.length && !ws.some(w => w.space === S.space)) S.space = ws[0].space;
+    renderStage({lift: ws.filter(w => w.space === S.space).map(w => w.id)});
+    say(`${NAME[a]} is active.`);
+  }
+  function closeSel() {
+    if (!S.open) return;
+    const r = items()[S.sel]; if (!r || r.kind !== 'win') return;
+    r.w.closed = true; S.dirty = true;
+    shut([r.w]);
+    after(`${r.w.title} closed.`);
+  }
+  function quitSel() {
+    if (!S.open) return;
+    const r = items()[S.sel]; if (!r) return;
+    S.running.delete(r.app); S.dirty = true;
+    shut(S.wins.filter(w => w.app === r.app && !w.closed && !w.min));
+    after(`${NAME[r.app]} quit.`);
+  }
+  function shut(ws) {
+    for (const w of ws) {
+      const el = winEl[w.id];
+      if (reduce || w.space !== S.space) continue;
+      el.classList.add('closing');
+    }
+    renderStage();
+  }
+  function after(msg) {
+    const n = items().length;
+    if (!n) { closeSwitcher(); say(msg); return; }
+    S.sel = Math.min(S.sel, n - 1);
+    renderSwitcher(); hint(); say(`${msg} ${label(items()[S.sel])}`);
+  }
+
+  // ── modifier: real ⌥, on-screen ⌘/⌥ (hold, or tap to latch) ──
+  const mod = {alt:false, meta:false, ptr:null, which:'cmd', t0:0, used:false, releasing:false};
+  function setKeys() {
+    keyEl.opt.classList.toggle('down', mod.alt || (!!mod.ptr && mod.which === 'opt'));
+    keyEl.cmd.classList.toggle('down', mod.meta || (!!mod.ptr && mod.which === 'cmd'));
+  }
+  function flash(k) {
+    const el = keyEl[k]; el.classList.add('down');
+    setTimeout(() => el.classList.remove('down'), 130);
+  }
+  function release() {
+    mod.ptr = null; setKeys();
+    if (S.open && !mod.alt) commit(); else hint();
+  }
+  function pressTab(back) {
+    flash('tab');
+    if (mod.ptr === 'held') mod.used = true;
+    if (!S.open) {
+      if (!mod.alt && !mod.ptr) { mod.ptr = 'latched'; mod.which = 'cmd'; setKeys(); }
+      openSwitcher();
+    } else move(back ? -1 : 1);
+  }
+
+  for (const k of ['opt','cmd']) {
+    const el = keyEl[k];
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); cancelGhost();
+      if (mod.ptr === 'latched') { mod.releasing = true; return; }
+      mod.ptr = 'held'; mod.which = k; mod.t0 = performance.now(); mod.used = false;
+      try { el.setPointerCapture(e.pointerId); } catch {}
+      setKeys(); hint();
+    });
+    el.addEventListener('pointerup', () => {
+      if (mod.releasing) { mod.releasing = false; release(); return; }
+      if (mod.ptr !== 'held') return;
+      if (performance.now() - mod.t0 < 380 && !mod.used) { mod.ptr = 'latched'; setKeys(); hint(); }
+      else release();
+    });
+    el.addEventListener('pointercancel', () => { mod.releasing = false; if (mod.ptr === 'held') release(); });
+    el.addEventListener('contextmenu', e => e.preventDefault());
+    el.addEventListener('click', e => {
+      if (e.detail !== 0) return; // keyboard activation only
+      cancelGhost();
+      if (mod.ptr) release(); else { mod.ptr = 'latched'; mod.which = k; setKeys(); hint(); }
+    });
+  }
+  const tapKeys = {tab: () => pressTab(false), q: quitSel, w: closeSel, esc: () => { if (S.open) closeSwitcher(); }};
+  for (const [k, fn] of Object.entries(tapKeys)) {
+    const el = keyEl[k];
+    el.addEventListener('pointerdown', e => { e.preventDefault(); cancelGhost(); if (k !== 'tab') flash(k); fn(); });
+    el.addEventListener('click', e => { if (e.detail === 0) { cancelGhost(); if (k !== 'tab') flash(k); fn(); } });
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  let passTab = false;
+  addEventListener('keydown', e => {
+    if (e.key === 'Alt') { cancelGhost(); mod.alt = true; setKeys(); hint(); return; }
+    if (e.key === 'Meta') { mod.meta = true; mod.metaAt = performance.now(); setKeys(); return; }
+    if (e.key === 'Tab') {
+      const ae = document.activeElement;
+      const free = !ae || ae === document.body || ae === stage;
+      if (e.altKey || S.open || (free && !passTab)) {
+        e.preventDefault(); cancelGhost();
+        if (e.altKey) { mod.alt = true; setKeys(); }
+        pressTab(e.shiftKey);
+      }
+      passTab = false;
+      return;
+    }
+    if (!S.open) return;
+    const onKey = document.activeElement && document.activeElement.classList.contains('key');
+    const c = e.code;
+    if (c === 'ArrowDown' || c === 'ArrowRight') move(1);
+    else if (c === 'ArrowUp' || c === 'ArrowLeft') move(-1);
+    else if ((c === 'Enter' || c === 'NumpadEnter') && !onKey) commit();
+    else if (c === 'Escape') { closeSwitcher(); passTab = true; say('Switcher closed.'); }
+    else if (c === 'KeyW') { flash('w'); closeSel(); }
+    else if (c === 'KeyQ') { flash('q'); quitSel(); }
+    else return;
+    e.preventDefault(); cancelGhost(true);
+  });
+  addEventListener('keyup', e => {
+    if (e.key === 'Alt') { mod.alt = false; setKeys(); if (S.open && !mod.ptr) commit(); else hint(); }
+    if (e.key === 'Meta') { mod.meta = false; setKeys(); }
+  });
+  addEventListener('blur', () => {
+    if (mod.meta && performance.now() - (mod.metaAt || 0) < 4000) { stolen = true; }
+    mod.alt = false; mod.meta = false;
+    if (S.open && mod.ptr !== 'latched') closeSwitcher();
+    setKeys(); hint();
+  });
+
+  // rows, windows, dock, toggle, reset
+  panel.addEventListener('click', e => {
+    const r = e.target.closest('[data-i]'); if (!r) return;
+    cancelGhost(true); S.sel = +r.dataset.i; commit();
+  });
+  for (const [id, el] of Object.entries(winEl)) el.addEventListener('pointerdown', () => {
+    cancelGhost(); if (S.open) return;
+    const w = S.wins.find(x => x.id === id);
+    if (S.wins[0] !== w || S.front !== w.app) { S.wins = [w, ...S.wins.filter(x => x !== w)]; bumpApp(w.app); renderStage(); }
+  });
+  $$('.dk').forEach(d => d.addEventListener('click', () => {
+    cancelGhost(); if (S.open) closeSwitcher();
+    const a = d.dataset.app; if (!S.running.has(a)) return;
+    activateApp(a);
+  }));
+  $('#mthumb').addEventListener('click', () => { cancelGhost(); if (S.open) closeSwitcher(); focusWin(S.wins.find(w => w.id === 'groceries')); });
+  $('#reset').addEventListener('click', () => { cancelGhost(); fresh(); closeSwitcher(); renderStage(); say('Desktop reset.'); });
+  stage.addEventListener('pointerdown', e => { if (e.target === stage) stage.focus({preventScroll:true}); });
+  // after a mouse click, hand focus back to the desktop so the real Tab key keeps driving the demo
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button, a');
+    if (b && e.detail > 0 && b.closest('#desk')) b.blur();
+  });
+
+  // copy
+  const copyBtn = $('#copy');
+  let copyT;
+  copyBtn.addEventListener('click', async () => {
+    const t = $('#cmd').textContent.trim();
+    let ok = false;
+    try { await navigator.clipboard.writeText(t); ok = true; } catch {
+      const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;opacity:0'; document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch {}
+      ta.remove();
+    }
+    copyBtn.classList.toggle('done', ok);
+    $('#copylabel').textContent = ok ? 'Copied' : 'Select and copy';
+    clearTimeout(copyT);
+    copyT = setTimeout(() => { copyBtn.classList.remove('done'); $('#copylabel').textContent = 'Copy'; }, 2000);
+  });
+
+  // clock
+  const tick = () => {
+    const d = new Date();
+    $('#clock').textContent = d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    $('#date').textContent = d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}).replace(',', '');
+  };
+  tick(); setInterval(tick, 20000);
+
+  // ── the one-shot demo: ⌘ down, Tab, Tab, let go ──
+  let ghostT = [], ghostOn = false;
+  function ghost() {
+    ghostOn = true;
+    const at = (ms, fn) => ghostT.push(setTimeout(fn, ms));
+    at(700, () => { mod.ptr = 'ghost'; mod.which = 'cmd'; setKeys(); });
+    at(950, () => { flash('tab'); openSwitcher(); hint(); });
+    at(1700, () => { flash('tab'); move(1); });
+    at(3000, () => { ghostOn = false; ghostT = []; release(); });
+  }
+  function cancelGhost(keepOpen) {
+    if (!ghostOn) return;
+    ghostT.forEach(clearTimeout); ghostT = []; ghostOn = false;
+    if (mod.ptr === 'ghost') mod.ptr = null;
+    if (S.open && !keepOpen) S.open = false;
+    if (S.open) mod.ptr = 'latched';
+    renderSwitcher(); setKeys(); hint();
+  }
+
+  // ── boot ──
+  const hash = location.hash.slice(1);
+  S.open = false;
+  renderStage(); renderSwitcher(); hint();
+  if (hash === 'open') {
+    mod.ptr = 'latched'; setKeys(); openSwitcher();
+  } else if (reduce) {
+    if (matchMedia('(min-width: 1100px)').matches) { mod.ptr = 'latched'; setKeys(); openSwitcher(); }
+  } else {
+    const go = () => { if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', go); ghost(); } };
+    document.addEventListener('visibilitychange', go); go();
+  }
+})();
+</script>
+</body>
+</html>

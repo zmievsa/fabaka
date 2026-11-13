@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fabaka: ⌘Tab for windows</title>
+<meta name="description" content="Fabaka is a window switcher for macOS. Hold ⌘ and press Tab: every window, on every Space and screen, minimized ones included.">
+<meta property="og:title" content="Fabaka: ⌘Tab for windows">
+<meta property="og:description" content="The built-in ⌘Tab switches apps. Fabaka switches windows.">
+<meta property="og:image" content="../../assets/fabaka-icon.png">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/png" href="../../assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#0a0a0a;
+  --housing:#141413;
+  --face:#050505;
+  --on:#ffb11f;
+  --off:rgba(255,177,31,.075);
+  --glow:rgba(255,150,0,.42);
+  --ink:#ece7dd;
+  --ink-2:#a8a196;
+  --rule:rgba(255,255,255,.07);
+  --peri:#4a57cb;
+  --peri-hi:#7684ee;
+  --wrap:1280px;
+  --gut:clamp(16px,3.4vw,48px);
+  --dh:clamp(76px,21vw,192px);
+  --lh:clamp(17px,2.4vw,32px);
+  --th:clamp(15px,1.9vw,26px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scrollbar-color:#3a352c var(--ground)}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 17px/1.5 Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--on);color:#120c00}
+a{color:inherit;text-underline-offset:.22em;text-decoration-thickness:1px}
+a:hover{color:var(--on)}
+:focus-visible{outline:2px solid var(--on);outline-offset:3px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut)}
+.cmd{font-family:-apple-system,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;font-weight:500}
+
+/* ── segment cells ─────────────────────────────────────────── */
+.d7,.d14{display:block;flex:none;overflow:visible}
+.d7{height:var(--dh);width:calc(var(--dh)*.7112);filter:drop-shadow(0 0 calc(var(--dh)*.05) var(--glow))}
+.d14{--off:rgba(255,177,31,.045);height:var(--ch,var(--lh));width:calc(var(--ch,var(--lh))*.77);filter:drop-shadow(0 0 2px var(--glow))}
+.cells{display:flex;gap:calc(var(--ch,var(--lh))*.1)}
+.d7[data-v="0"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on)}
+.d7[data-v="1"]{--b:var(--on);--c:var(--on)}
+.d7[data-v="2"]{--a:var(--on);--b:var(--on);--d:var(--on);--e:var(--on);--g:var(--on)}
+.d7[data-v="3"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--g:var(--on)}
+.d7[data-v="4"]{--b:var(--on);--c:var(--on);--f:var(--on);--g:var(--on)}
+.d7[data-v="5"]{--a:var(--on);--c:var(--on);--d:var(--on);--f:var(--on);--g:var(--on)}
+.d7[data-v="6"]{--a:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g:var(--on)}
+.d7[data-v="7"]{--a:var(--on);--b:var(--on);--c:var(--on)}
+.d7[data-v="8"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g:var(--on)}
+.d7[data-v="9"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--f:var(--on);--g:var(--on)}
+.d14[data-c="0"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--j:var(--on);--k:var(--on)}
+.d14[data-c="1"]{--b:var(--on);--c:var(--on);--j:var(--on)}
+.d14[data-c="2"]{--a:var(--on);--b:var(--on);--d:var(--on);--e:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="3"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--g2:var(--on)}
+.d14[data-c="4"]{--b:var(--on);--c:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="5"]{--a:var(--on);--c:var(--on);--d:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="6"]{--a:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="7"]{--a:var(--on);--b:var(--on);--c:var(--on)}
+.d14[data-c="8"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="9"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="A"]{--a:var(--on);--b:var(--on);--c:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="B"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--g2:var(--on);--i:var(--on);--l:var(--on)}
+.d14[data-c="C"]{--a:var(--on);--d:var(--on);--e:var(--on);--f:var(--on)}
+.d14[data-c="D"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--i:var(--on);--l:var(--on)}
+.d14[data-c="E"]{--a:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="F"]{--a:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on)}
+.d14[data-c="G"]{--a:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--g2:var(--on)}
+.d14[data-c="H"]{--b:var(--on);--c:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="I"]{--a:var(--on);--d:var(--on);--i:var(--on);--l:var(--on)}
+.d14[data-c="J"]{--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on)}
+.d14[data-c="K"]{--e:var(--on);--f:var(--on);--g1:var(--on);--j:var(--on);--m:var(--on)}
+.d14[data-c="L"]{--d:var(--on);--e:var(--on);--f:var(--on)}
+.d14[data-c="M"]{--b:var(--on);--c:var(--on);--e:var(--on);--f:var(--on);--h:var(--on);--j:var(--on)}
+.d14[data-c="N"]{--b:var(--on);--c:var(--on);--e:var(--on);--f:var(--on);--h:var(--on);--m:var(--on)}
+.d14[data-c="O"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on)}
+.d14[data-c="P"]{--a:var(--on);--b:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="Q"]{--a:var(--on);--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on);--m:var(--on)}
+.d14[data-c="R"]{--a:var(--on);--b:var(--on);--e:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on);--m:var(--on)}
+.d14[data-c="S"]{--a:var(--on);--c:var(--on);--d:var(--on);--f:var(--on);--g1:var(--on);--g2:var(--on)}
+.d14[data-c="T"]{--a:var(--on);--i:var(--on);--l:var(--on)}
+.d14[data-c="U"]{--b:var(--on);--c:var(--on);--d:var(--on);--e:var(--on);--f:var(--on)}
+.d14[data-c="V"]{--e:var(--on);--f:var(--on);--k:var(--on);--j:var(--on)}
+.d14[data-c="W"]{--b:var(--on);--c:var(--on);--e:var(--on);--f:var(--on);--k:var(--on);--m:var(--on)}
+.d14[data-c="X"]{--h:var(--on);--j:var(--on);--k:var(--on);--m:var(--on)}
+.d14[data-c="Y"]{--h:var(--on);--j:var(--on);--l:var(--on)}
+.d14[data-c="Z"]{--a:var(--on);--d:var(--on);--j:var(--on);--k:var(--on)}
+.d14[data-c="-"]{--g1:var(--on);--g2:var(--on)}
+.d14[data-c="+"]{--g1:var(--on);--g2:var(--on);--i:var(--on);--l:var(--on)}
+.d14[data-c="/"]{--j:var(--on);--k:var(--on)}
+.d14[data-c="."]{--dp:var(--on)}
+.d14[data-c="("]{--j:var(--on);--m:var(--on)}
+.d14[data-c=")"]{--h:var(--on);--k:var(--on)}
+.d14[data-c="*"]{--g1:var(--on);--g2:var(--on);--h:var(--on);--i:var(--on);--j:var(--on);--k:var(--on);--l:var(--on);--m:var(--on)}
+.d14[data-c="'"]{--i:var(--on)}
+
+/* ── header ───────────────────────────────────────────────── */
+.top{display:flex;align-items:center;justify-content:space-between;height:72px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:600 22px/1 "Barlow Condensed",sans-serif;letter-spacing:.02em}
+.brand img{width:34px;height:34px;display:block}
+.src{display:inline-flex;align-items:center;gap:6px;font-weight:500;font-size:15px;color:var(--ink-2);text-decoration:none;padding:8px 2px}
+.src svg{width:12px;height:12px}
+.src:hover{color:var(--on)}
+
+/* ── hero ─────────────────────────────────────────────────── */
+.hero{padding-top:clamp(16px,3vw,36px);padding-bottom:clamp(24px,3vw,40px)}
+h1{margin:0 0 clamp(20px,2.6vw,36px);font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:clamp(2.4rem,5.8vw,5.1rem);line-height:.94;text-transform:uppercase;letter-spacing:.004em;text-wrap:balance}
+h1 .cmd{font-size:.86em;letter-spacing:-.02em;margin-right:.02em}
+h1 .lit{display:block;color:var(--on)}
+.get{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,500px);gap:20px 56px;align-items:start}
+.lede{margin:0;color:var(--ink-2);max-width:52ch}
+.lede strong{color:var(--ink);font-weight:500}
+.install{display:flex;align-items:stretch;background:var(--face);border-radius:10px;box-shadow:inset 0 0 0 1px var(--rule),inset 0 2px 10px rgba(0,0,0,.8)}
+.install code{flex:1;min-width:0;display:flex;align-items:center;padding:14px 16px;font:500 14px/1.4 "JetBrains Mono",ui-monospace,monospace;color:var(--ink);white-space:nowrap;overflow-x:auto;user-select:all;scrollbar-width:none}
+.install code::-webkit-scrollbar{display:none}
+.install code span{color:var(--ink-2)}
+.copy{--ch:19px;flex:none;display:flex;align-items:center;justify-content:center;gap:10px;margin:6px;padding:0 14px;min-height:44px;border:1px solid rgba(255,177,31,.38);border-radius:7px;background:#0d0b07;cursor:pointer;color:var(--on)}
+.copy:hover{border-color:var(--on);background:#171105}
+.copy:hover .d14{--off:rgba(255,177,31,.12)}
+.copy:active{background:#1f1606}
+.copy:focus-visible{outline-offset:2px}
+.req{margin:12px 0 0;font-size:14px;color:var(--ink-2)}
+
+/* ── the match ────────────────────────────────────────────── */
+.housing{background:var(--housing);border-radius:16px;padding:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.6),0 40px 80px -30px rgba(0,0,0,.9)}
+.boards,.pics{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.4vw,18px)}
+.board{position:relative;display:grid;place-items:center;padding:clamp(14px,2.6vw,34px) clamp(8px,2vw,28px);background:var(--face) repeating-linear-gradient(180deg,transparent 0 5px,rgba(255,255,255,.014) 5px 6px);border-radius:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 3px 14px rgba(0,0,0,.9)}
+.stack{display:grid;gap:clamp(8px,1.4vw,18px)}
+.score{display:flex;gap:calc(var(--dh)*.1);justify-content:flex-end}
+.tick{display:flex;align-items:center;gap:clamp(8px,1.4vw,18px);margin-top:clamp(8px,1.4vw,18px)}
+.ticker{flex:1;--ch:var(--th);display:flex;align-items:center;padding:clamp(10px,1.2vw,16px) clamp(10px,1.6vw,22px);background:var(--face);border-radius:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 3px 14px rgba(0,0,0,.9);min-width:0}
+.replay{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:#1d1c1a;color:var(--ink);font:600 15px/1 Barlow,sans-serif;letter-spacing:.02em;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06)}
+.replay svg{width:16px;height:16px;color:var(--on)}
+.replay:hover{background:#262420;border-color:rgba(255,177,31,.4)}
+.replay:active{transform:translateY(1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.replay[hidden]{display:none}
+
+/* pictures: what each board counted */
+.pics{padding:44px 22px 0;align-items:start}
+.pic-l{display:grid;gap:clamp(32px,4vw,52px);justify-items:start}
+.pic-r{display:grid;justify-items:stretch}
+
+.stripbox{container-type:inline-size;width:100%}
+.strip{--p:9px;--ic:min(46px,calc((100cqw - 52px) / 8 - 2 * var(--p)));width:fit-content;display:flex;gap:4px;padding:12px 12px 8px;border-radius:calc(var(--ic)*.42);background:rgba(46,45,48,.74);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 24px 50px -18px rgba(0,0,0,.85)}
+.strip li{list-style:none;display:grid;justify-items:center;gap:5px;padding:var(--p) var(--p) 0;border-radius:calc(var(--ic)*.24)}
+.strip li svg{width:var(--ic);height:var(--ic);display:block}
+.strip li span{width:0;display:flex;justify-content:center;font-size:12px;font-weight:500;line-height:1;height:16px;padding-bottom:4px;visibility:hidden;white-space:nowrap}
+.strip li.sel{background:rgba(255,255,255,.15)}
+.strip li.sel span{visibility:visible}
+.strip,.fab{margin:0}
+
+.fab{padding:6px;border-radius:14px;background:rgba(40,40,43,.8);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 30px 60px -20px rgba(0,0,0,.9)}
+.fab li{list-style:none;display:flex;align-items:center;gap:10px;height:40px;padding:6px 10px 6px 6px;border-radius:8px;font-size:14px}
+.fab li>svg{width:28px;height:28px;flex:none}
+.fab .t{flex:1;min-width:0;display:flex;align-items:center;gap:7px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fab .t span{overflow:hidden;text-overflow:ellipsis}
+.fab .t svg{width:13px;height:13px;flex:none;color:var(--ink-2)}
+.fab .a{flex:none;font-size:12.5px;color:var(--ink-2)}
+.fab .min>svg:first-child{opacity:.42}
+.fab .sel{background:var(--peri);color:#fff}
+.fab .sel .a,.fab .sel .t svg{color:#e9ebff}
+
+.keys{display:grid;gap:22px;max-width:440px;font-size:16px;color:var(--ink-2)}
+.keys p{margin:0}
+.key{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;color:var(--ink)}
+.cap{--ch:22px;display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:8px;background:var(--face);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 2px 0 rgba(0,0,0,.7)}
+.kp{display:flex;gap:8px}
+.keys q{quotes:"“" "”"}
+
+/* ── totem ────────────────────────────────────────────────── */
+.facts{padding-top:clamp(72px,9vw,128px);padding-bottom:clamp(64px,8vw,112px)}
+.totem{margin:0;background:var(--housing);border-radius:16px;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 40px 80px -30px rgba(0,0,0,.9)}
+.totem li{list-style:none;display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,3vw,40px);align-items:center;padding:24px 28px}
+.totem li+li{border-top:1px solid rgba(0,0,0,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.totem .ro{--ch:clamp(28px,3.6vw,46px);padding:clamp(10px,1.2vw,14px);background:var(--face);border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 3px 12px rgba(0,0,0,.9)}
+.totem p{margin:0;max-width:64ch;color:var(--ink-2)}
+.totem p strong{color:var(--ink);font-weight:500}
+
+footer{border-top:1px solid var(--rule)}
+footer .wrap{display:flex;align-items:center;gap:10px;height:84px;color:var(--ink-2);font-size:14px}
+footer img{width:24px;height:24px}
+
+/* ── narrow ───────────────────────────────────────────────── */
+@media (max-width:900px){
+  .housing{padding:14px}
+  .pics{padding:32px 14px 0}
+  .get{grid-template-columns:1fr}
+  .pics{grid-template-columns:1fr;gap:28px}
+  .pic-l{display:contents}
+  .stripbox{order:1}
+  .strip{margin:0 auto}
+  .pic-r{order:2}
+  .keys{order:3;max-width:none}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .install{flex-direction:column}
+  .install code{padding:14px 14px 4px;font-size:13px}
+  .copy{align-self:stretch;margin:8px}
+  .replay{padding:0 12px}
+  .replay b{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .strip{gap:2px;padding:10px 8px 6px}
+  .fab li{padding:6px 8px 6px 6px;gap:9px}
+  .totem li{padding:18px 14px}
+  .housing{padding:12px}
+  .pics{padding:28px 0 0}
+  .strip{--p:6px}
+  .fab .a{font-size:12px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="s7" viewBox="0 0 120.9 170"><g transform="translate(20.9 0) skewX(-7)"><polygon points="10.7,8.5 19.2,0 80.8,0 89.3,8.5 80.8,17 19.2,17" style="fill:var(--a,var(--off))"/><polygon points="10.7,85 19.2,76.5 80.8,76.5 89.3,85 80.8,93.5 19.2,93.5" style="fill:var(--g,var(--off))"/><polygon points="10.7,161.5 19.2,153 80.8,153 89.3,161.5 80.8,170 19.2,170" style="fill:var(--d,var(--off))"/><polygon points="8.5,10.7 17,19.2 17,74.3 8.5,82.8 0,74.3 0,19.2" style="fill:var(--f,var(--off))"/><polygon points="91.5,10.7 100,19.2 100,74.3 91.5,82.8 83,74.3 83,19.2" style="fill:var(--b,var(--off))"/><polygon points="8.5,87.2 17,95.7 17,150.8 8.5,159.3 0,150.8 0,95.7" style="fill:var(--e,var(--off))"/><polygon points="91.5,87.2 100,95.7 100,150.8 91.5,159.3 83,150.8 83,95.7" style="fill:var(--c,var(--off))"/></g></symbol>
+    <symbol id="s14" viewBox="0 0 130.9 170"><g transform="translate(20.9 0) skewX(-7)"><polygon points="8.4,6 14.4,0 85.6,0 91.6,6 85.6,12 14.4,12" style="fill:var(--a,var(--off))"/><polygon points="8.4,164 14.4,158 85.6,158 91.6,164 85.6,170 14.4,170" style="fill:var(--d,var(--off))"/><polygon points="8.4,85 14.4,79 41.6,79 47.6,85 41.6,91 14.4,91" style="fill:var(--g1,var(--off))"/><polygon points="52.4,85 58.4,79 85.6,79 91.6,85 85.6,91 58.4,91" style="fill:var(--g2,var(--off))"/><polygon points="6,8.4 12,14.4 12,76.6 6,82.6 0,76.6 0,14.4" style="fill:var(--f,var(--off))"/><polygon points="94,8.4 100,14.4 100,76.6 94,82.6 88,76.6 88,14.4" style="fill:var(--b,var(--off))"/><polygon points="6,87.4 12,93.4 12,155.6 6,161.6 0,155.6 0,93.4" style="fill:var(--e,var(--off))"/><polygon points="94,87.4 100,93.4 100,155.6 94,161.6 88,155.6 88,93.4" style="fill:var(--c,var(--off))"/><polygon points="50,8.4 56,14.4 56,76.6 50,82.6 44,76.6 44,14.4" style="fill:var(--i,var(--off))"/><polygon points="50,87.4 56,93.4 56,155.6 50,161.6 44,155.6 44,93.4" style="fill:var(--l,var(--off))"/><polygon points="14.4,14.4 25.8,14.4 41.6,61.6 41.6,76.6 30.2,76.6 14.4,29.4" style="fill:var(--h,var(--off))"/><polygon points="85.6,14.4 74.2,14.4 58.4,61.6 58.4,76.6 69.8,76.6 85.6,29.4" style="fill:var(--j,var(--off))"/><polygon points="14.4,155.6 25.8,155.6 41.6,108.4 41.6,93.4 30.2,93.4 14.4,140.6" style="fill:var(--k,var(--off))"/><polygon points="85.6,155.6 74.2,155.6 58.4,108.4 58.4,93.4 69.8,93.4 85.6,140.6" style="fill:var(--m,var(--off))"/><circle cx="106" cy="165" r="6" style="fill:var(--dp,var(--off))"/></g></symbol>
+    <symbol id="i-browser" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2f6be0"/><g fill="none" stroke="#fff" stroke-width="3.4"><circle cx="32" cy="32" r="16"/><ellipse cx="32" cy="32" rx="7" ry="16"/><path d="M16.5 27h31M16.5 37h31"/></g></symbol>
+    <symbol id="i-mail" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#e0533a"/><g fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"><rect x="15" y="20" width="34" height="24" rx="3"/><path d="M16 22l16 12 16-12"/></g></symbol>
+    <symbol id="i-editor" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#7650dc"/><g fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 22l-10 10 10 10M40 22l10 10-10 10M35 18l-6 28"/></g></symbol>
+    <symbol id="i-terminal" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#30343b"/><rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="#4a4f58" stroke-width="2"/><g fill="none" stroke="#9cf0b4" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 23l9 9-9 9M32 42h14"/></g></symbol>
+    <symbol id="i-notes" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#f1c232"/><path d="M0 14a14 14 0 0 1 14-14h36a14 14 0 0 1 14 14v6H0z" fill="#e3a91b"/><g stroke="#5b4300" stroke-width="3.2" stroke-linecap="round"><path d="M17 31h30M17 40h30M17 49h18"/></g></symbol>
+    <symbol id="i-music" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#e3426f"/><g fill="#fff"><path d="M27 18l18-4v28h-4V22l-10 2.2V46h-4z"/><ellipse cx="23.5" cy="46" rx="6" ry="4.8"/><ellipse cx="41.5" cy="42" rx="6" ry="4.8"/></g></symbol>
+    <symbol id="i-chat" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#29a85d"/><path d="M32 16c-10 0-18 6.3-18 14.2 0 4.4 2.5 8.4 6.5 11L18.6 49l9-4.6c1.4.3 2.9.4 4.4.4 10 0 18-6.4 18-14.6S42 16 32 16z" fill="#fff"/></symbol>
+    <symbol id="i-design" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#f2732a"/><g fill="none" stroke="#fff" stroke-width="3.4"><circle cx="27" cy="27" r="11"/><rect x="29" y="29" width="18" height="18" rx="3" fill="#fff" fill-opacity=".28"/></g></symbol>
+    <symbol id="g-min" viewBox="0 0 16 16"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.8 8h6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="top wrap">
+  <a class="brand" href="./" aria-label="Fabaka home"><img src="../../assets/fabaka-icon.webp" alt="" width="34" height="34">Fabaka</a>
+  <a class="src" href="https://github.com/zmievsa/fabaka">Source <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <h1><span class="cmd">⌘</span>Tab switches apps. <span class="lit">Fabaka switches windows.</span></h1>
+    <div class="get">
+      <p class="lede"><strong>Hold ⌘ and press Tab: every window is listed, most recent first. Release ⌘ to jump to the selected one.</strong> Every Space, every screen, minimized and hidden windows included.</p>
+      <div>
+      <div class="install">
+        <code id="cmd"><span>$&nbsp;</span>brew install --cask zmievsa/tap/fabaka</code>
+        <button class="copy" id="copy" type="button" aria-label="Copy install command"><span class="cells" id="copyLabel" aria-hidden="true"><svg class="d14" data-c="C"><use href="#s14"/></svg><svg class="d14" data-c="O"><use href="#s14"/></svg><svg class="d14" data-c="P"><use href="#s14"/></svg><svg class="d14" data-c="Y"><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg></span></button>
+      </div>
+      <p class="sr" aria-live="polite" id="copyStatus"></p>
+        <p class="req">Needs macOS 26 on Apple silicon.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="match wrap" aria-labelledby="matchTitle">
+    <h2 class="sr" id="matchTitle">What each switcher lets you reach</h2>
+    <div class="housing">
+      <div class="boards">
+        <div class="board" role="img" aria-label="Built-in ⌘Tab: 8 apps">
+          <div class="stack">
+            <div class="cells" data-text="CMD-TAB"><svg class="d14" data-c="C"><use href="#s14"/></svg><svg class="d14" data-c="M"><use href="#s14"/></svg><svg class="d14" data-c="D"><use href="#s14"/></svg><svg class="d14" data-c="-"><use href="#s14"/></svg><svg class="d14" data-c="T"><use href="#s14"/></svg><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c="B"><use href="#s14"/></svg></div>
+            <div class="score" id="nL"><svg class="d7" data-v=""><use href="#s7"/></svg><svg class="d7" data-v="8"><use href="#s7"/></svg></div>
+            <div class="cells"><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c="P"><use href="#s14"/></svg><svg class="d14" data-c="P"><use href="#s14"/></svg><svg class="d14" data-c="S"><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg></div>
+          </div>
+        </div>
+        <div class="board" role="img" aria-label="Fabaka: 10 windows">
+          <div class="stack">
+            <div class="cells"><svg class="d14" data-c="F"><use href="#s14"/></svg><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c="B"><use href="#s14"/></svg><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c="K"><use href="#s14"/></svg><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg></div>
+            <div class="score" id="nR"><svg class="d7" data-v="1"><use href="#s7"/></svg><svg class="d7" data-v="0"><use href="#s7"/></svg></div>
+            <div class="cells"><svg class="d14" data-c="W"><use href="#s14"/></svg><svg class="d14" data-c="I"><use href="#s14"/></svg><svg class="d14" data-c="N"><use href="#s14"/></svg><svg class="d14" data-c="D"><use href="#s14"/></svg><svg class="d14" data-c="O"><use href="#s14"/></svg><svg class="d14" data-c="W"><use href="#s14"/></svg><svg class="d14" data-c="S"><use href="#s14"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="tick">
+        <div class="ticker" aria-hidden="true"><div class="cells" id="ticker"><svg class="d14" data-c="F"><use href="#s14"/></svg><svg class="d14" data-c="I"><use href="#s14"/></svg><svg class="d14" data-c="N"><use href="#s14"/></svg><svg class="d14" data-c="A"><use href="#s14"/></svg><svg class="d14" data-c="L"><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg></div></div>
+        <button class="replay" id="replay" type="button" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3.6 1.2v3.4H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Replay</b></button>
+      </div>
+    </div>
+
+    <div class="pics">
+      <div class="pic-l">
+        <div class="stripbox"><ol class="strip" id="strip" aria-label="Built-in ⌘Tab: one icon per app">
+          <li><svg aria-hidden="true"><use href="#i-browser"/></svg><span>Browser</span></li>
+          <li class="sel"><svg aria-hidden="true"><use href="#i-editor"/></svg><span>Editor</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chat"/></svg><span>Chat</span></li>
+          <li><svg aria-hidden="true"><use href="#i-design"/></svg><span>Design</span></li>
+          <li><svg aria-hidden="true"><use href="#i-notes"/></svg><span>Notes</span></li>
+          <li><svg aria-hidden="true"><use href="#i-music"/></svg><span>Music</span></li>
+          <li><svg aria-hidden="true"><use href="#i-terminal"/></svg><span>Terminal</span></li>
+          <li><svg aria-hidden="true"><use href="#i-mail"/></svg><span>Mail</span></li>
+        </ol></div>
+        <div class="keys">
+          <div class="key"><span class="kp"><span class="cap"><svg class="d14" data-c="W"><use href="#s14"/></svg></span><span class="cap"><svg class="d14" data-c="Q"><use href="#s14"/></svg></span></span><p>While the list is open, W closes the selected window and Q quits its app.</p></div>
+          <p>Apps left running with no windows are listed too, so Q cleans them up. Apps meant to always run (Finder, a VPN, a terminal with a hotkey) are told to <q>Stay</q> and are left out.</p>
+        </div>
+      </div>
+      <div class="pic-r">
+        <ol class="fab" id="fab" aria-label="Fabaka: every window, most recent first">
+          <li><svg aria-hidden="true"><use href="#i-browser"/></svg><span class="t"><span>Docs · Getting started</span></span><span class="a">Browser</span></li>
+          <li class="sel"><svg aria-hidden="true"><use href="#i-editor"/></svg><span class="t"><span>README.md</span></span><span class="a">Editor</span></li>
+          <li><svg aria-hidden="true"><use href="#i-browser"/></svg><span class="t"><span>PR #212 · fix login</span></span><span class="a">Browser</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chat"/></svg><span class="t"><span>Team</span></span><span class="a">Chat</span></li>
+          <li><svg aria-hidden="true"><use href="#i-design"/></svg><span class="t"><span>Logo v4</span></span><span class="a">Design</span></li>
+          <li class="min"><svg aria-hidden="true"><use href="#i-notes"/></svg><span class="t"><span>Groceries</span><svg role="img" aria-label="minimized"><use href="#g-min"/></svg></span><span class="a">Notes</span></li>
+          <li><svg aria-hidden="true"><use href="#i-terminal"/></svg><span class="t"><span>~/code · zsh</span></span><span class="a">Terminal</span></li>
+          <li><svg aria-hidden="true"><use href="#i-editor"/></svg><span class="t"><span>app.swift</span></span><span class="a">Editor</span></li>
+          <li><svg aria-hidden="true"><use href="#i-mail"/></svg><span class="t"><span>Inbox (3)</span></span><span class="a">Mail</span></li>
+          <li><svg aria-hidden="true"><use href="#i-browser"/></svg><span class="t"><span>Flights to Lisbon</span></span><span class="a">Browser</span></li>
+          <li><svg aria-hidden="true"><use href="#i-music"/></svg><span class="t"><span>Music</span></span><span class="a">No windows</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="facts wrap" aria-label="Details">
+    <ol class="totem">
+      <li><span class="ro cells" aria-hidden="true"><svg class="d14" data-c="N"><use href="#s14"/></svg><svg class="d14" data-c="O"><use href="#s14"/></svg><svg class="d14" data-c="W"><use href="#s14"/></svg></span><p><strong>The list appears the instant you press ⌘Tab.</strong></p></li>
+      <li><span class="ro cells" aria-hidden="true"><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c=""><use href="#s14"/></svg><svg class="d14" data-c="0"><use href="#s14"/></svg></span><p><strong>Screen Recording permissions, ever.</strong> Accessibility only: icons and titles, no window thumbnails.</p></li>
+      <li><span class="ro cells" aria-hidden="true"><svg class="d14" data-c="M"><use href="#s14"/></svg><svg class="d14" data-c="I"><use href="#s14"/></svg><svg class="d14" data-c="T"><use href="#s14"/></svg></span><p><strong>Free and <a href="https://github.com/zmievsa/fabaka">open source</a>.</strong> No account, no telemetry. No menu-bar icon: open the app again for Settings.</p></li>
+    </ol>
+  </section>
+</main>
+
+<footer><div class="wrap"><img src="../../assets/fabaka-icon.webp" alt="" width="24" height="24">fabaka.dev</div></footer>
+
+<script>
+(() => {
+  const NAME = {browser:'Browser',mail:'Mail',editor:'Editor',terminal:'Terminal',notes:'Notes',music:'Music',chat:'Chat',design:'Design'};
+  const EV = [
+    {app:'browser', t:'Flights to Lisbon',      tk:'NEW BROWSER WINDOW'},
+    {app:'mail',    t:'Inbox (3)',              tk:'NEW MAIL WINDOW'},
+    {app:'editor',  t:'app.swift',              tk:'NEW EDITOR WINDOW'},
+    {app:'terminal',t:'~/code · zsh',           tk:'NEW TERMINAL WINDOW'},
+    {app:'music',   none:true,                  tk:'MUSIC - NO WINDOWS'},
+    {app:'notes',   t:'Groceries', min:true,    tk:'NOTES - MINIMIZED'},
+    {app:'design',  t:'Logo v4',                tk:'NEW DESIGN WINDOW'},
+    {app:'chat',    t:'Team',                   tk:'CHAT - ON SPACE 2'},
+    {app:'browser', t:'PR #212 · fix login',    tk:'2ND BROWSER WINDOW'},
+    {app:'editor',  t:'README.md',              tk:'2ND EDITOR WINDOW'},
+    {app:'browser', t:'Docs · Getting started', tk:'3RD BROWSER WINDOW'},
+  ];
+  const $ = id => document.getElementById(id);
+  const put = (row, str) => { const c = row.children; for (let i = 0; i < c.length; i++) { const ch = str[i] || ' '; c[i].dataset.c = ch === ' ' ? '' : ch; } };
+  const num = (row, n) => { const s = String(n).padStart(2, ' '); [...row.children].forEach((d, i) => d.dataset.v = s[i] === ' ' ? '' : s[i]); };
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const icon = a => `<svg aria-hidden="true"><use href="#i-${a}"/></svg>`;
+
+  function render(k, done) { // state after the first k events
+    const wins = [], apps = []; let music = false;
+    EV.slice(0, k).forEach(e => {
+      const i = apps.indexOf(e.app); if (i > -1) apps.splice(i, 1); apps.unshift(e.app);
+      if (e.none) music = true; else wins.unshift(e);
+    });
+    num($('nL'), apps.length); num($('nR'), wins.length);
+    put($('ticker'), done ? 'FINAL' : k ? EV[k-1].tk : '');
+    const sl = apps.length > 1 ? 1 : 0;
+    $('strip').innerHTML = apps.map((a, i) => `<li${i === sl ? ' class="sel"' : ''}>${icon(a)}<span>${NAME[a]}</span></li>`).join('');
+    const rows = wins.map(w => ({a:w.app, t:w.t, r:NAME[w.app], min:w.min}));
+    if (music) rows.push({a:'music', t:'Music', r:'No windows'});
+    const sr = rows.length > 1 ? 1 : 0;
+    $('fab').innerHTML = rows.map((w, i) => `<li class="${[i === sr ? 'sel' : '', w.min ? 'min' : ''].join(' ').trim()}">${icon(w.a)}<span class="t"><span>${esc(w.t)}</span>${w.min ? '<svg role="img" aria-label="minimized"><use href="#g-min"/></svg>' : ''}</span><span class="a">${w.r}</span></li>`).join('');
+  }
+
+  // the count: instant swaps, a fixed beat; the last three beats are slower so ⌘Tab's stall reads
+  let timers = [];
+  function play() {
+    timers.forEach(clearTimeout); timers = [];
+    render(0);
+    let t = 400;
+    EV.forEach((_, i) => { timers.push(setTimeout(() => render(i + 1), t)); t += i < 7 ? 380 : 560; });
+    timers.push(setTimeout(() => render(EV.length, true), t));
+  }
+
+  const replay = $('replay');
+  replay.hidden = false;
+  replay.addEventListener('click', play);
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!still) {
+    render(0);
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); play(); } }, {threshold: .35});
+    io.observe(document.querySelector('.housing'));
+  }
+
+  // copy
+  const btn = $('copy'), lab = $('copyLabel'), status = $('copyStatus');
+  const CMD = 'brew install --cask zmievsa/tap/fabaka';
+  let reset;
+  function show(word, said) { put(lab, word); status.textContent = said; clearTimeout(reset); reset = setTimeout(() => { put(lab, 'COPY'); status.textContent = ''; }, 2400); }
+  function legacy() {
+    const ta = document.createElement('textarea'); ta.value = CMD; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); return ok;
+  }
+  btn.addEventListener('click', async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(CMD); ok = true; } catch (e) { ok = legacy(); }
+    if (ok) show('COPIED', 'Copied');
+    else { getSelection().selectAllChildren($('cmd')); show('CMD+C', 'Copy failed. The command is selected: press Command C.'); }
+  });
+})();
+</script>
+</body>
+</html>

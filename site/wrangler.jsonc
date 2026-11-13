@@ -1,0 +1,7 @@
+{
+  // fabaka.dev: one static page served from Cloudflare Workers static assets.
+  "name": "fabaka-site",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./public" },
+  "routes": [{ "pattern": "fabaka.dev", "custom_domain": true }]
+}

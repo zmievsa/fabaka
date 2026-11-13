@@ -1,5 +1,7 @@
 # Fabaka
 
+[fabaka.dev](https://fabaka.dev)
+
 A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, without screen capture, settings or a paid tier. Built after reading [MacTab](https://github.com/samuelcolvin/MacTab) and [AltTab](https://github.com/lwouis/alt-tab-macos).
 
 ## Behavior
@@ -59,4 +61,5 @@ make uninstall # stops it and removes it
 make logs      # streams its log
 make test      # end-to-end tests against a stand-in busy app; stops the installed Fabaka for ~2 minutes
 make release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
+make site      # deploys site/public to fabaka.dev (Cloudflare Workers static assets)
 ```
