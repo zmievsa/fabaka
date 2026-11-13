@@ -15,6 +15,14 @@ final class SwitcherController {
     private var switching = false
     private var windows: [WindowSnapshot] = []
     private var selection = 0
+    /// With the Settings option on, the panel waits this long before it appears. 71% of ⌘Tab presses (546
+    /// measured) are quick taps to the previous window, released within 100 ms; showing the panel for those
+    /// only makes it flash. Off by default: the wait itself annoyed its one user.
+    static let showDelay: TimeInterval = 0.12
+    static let hideOnQuickTapKey = "hideOnQuickTap"
+    /// Counts ⌘Tab presses, so a delayed show left over from an earlier press does nothing.
+    private var press = 0
+    private var panelShown = false
 
     init() {
         panel.onClick = { [weak self] index in self?.onKeyboardThread { $0.commit(index) } }
@@ -102,10 +110,23 @@ final class SwitcherController {
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         let start = windows.first?.pid == frontPID ? 1 : 0
         selection = backward ? windows.count - 1 : min(start, windows.count - 1)
+        guard UserDefaults.standard.bool(forKey: Self.hideOnQuickTapKey) else { return showPanel() }
+        press += 1
+        let press = press
+        // Timed off the main thread, so a busy main thread can't make the panel late.
+        DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + Self.showDelay) { [weak self] in
+            self?.onKeyboardThread { $0.showPanelIfPending(press) }
+        }
+    }
+
+    private func showPanelIfPending(_ press: Int) {
+        guard switching, !panelShown, press == self.press else { return }
         showPanel()
     }
 
+    /// Shows the panel now, or redraws it with the current rows and selection.
     private func showPanel() {
+        panelShown = true
         let windows = windows, selection = selection
         DispatchQueue.main.async { self.panel.show(windows, selection: selection) }
     }
@@ -113,6 +134,8 @@ final class SwitcherController {
     private func move(_ step: Int) {
         guard !windows.isEmpty else { return }
         selection = ((selection + step) % windows.count + windows.count) % windows.count
+        // Navigating means you want to see the list, so a pending panel shows right away.
+        guard panelShown else { return showPanel() }
         let selection = selection
         DispatchQueue.main.async { self.panel.select(selection) }
     }
@@ -148,6 +171,8 @@ final class SwitcherController {
     private func end() {
         switching = false
         windows = []
+        guard panelShown else { return }
+        panelShown = false
         DispatchQueue.main.async { self.panel.orderOut(nil) }
     }
 }

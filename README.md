@@ -5,7 +5,7 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
 ## Behavior
 
 - Hold ⌘ and press Tab to open the Switcher. Tab moves down, ⇧Tab moves up, and releasing ⌘ focuses the selected window.
-- The Switcher appears the moment you press ⌘Tab. There are no built-in waits.
+- The Switcher appears the moment you press ⌘Tab. Settings can make it wait 120 ms instead, so a quick tap back to the previous window doesn't flash it; Tab or an arrow still shows it at once.
 - While the Switcher is open (⌘ still held):
   - ↑ ↓ ← → move the selection.
   - Return focuses the selected window, and Esc cancels.
@@ -16,7 +16,7 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
 - Most recently focused windows come first.
 - The Switcher appears on the screen of the focused window.
 - Fathom is never listed. Remote desktop and VM apps keep ⌘Tab while they are full screen.
-- Flick has one setting, Resident apps, behind its menu-bar icon. No auto-updates and no telemetry. It starts at login.
+- Flick's few settings (Resident apps, and the quick-tap wait) sit behind its menu-bar icon. No auto-updates and no telemetry. It starts at login.
 
 ## Resident apps
 

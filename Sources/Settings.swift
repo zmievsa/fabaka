@@ -120,6 +120,7 @@ private let iconSize: CGFloat = 56
 private struct SettingsView: View {
     @StateObject private var model = ShelvesModel()
     @Namespace private var shelves
+    @AppStorage(SwitcherController.hideOnQuickTapKey) private var hideOnQuickTap = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -141,6 +142,22 @@ private struct SettingsView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .padding(.top, 18)
+
+            Divider()
+                .padding(.vertical, 20)
+
+            Toggle(isOn: $hideOnQuickTap) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Skip the Switcher on a quick tap")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("Waits \(Int(SwitcherController.showDelay * 1000)) ms before showing it, so a quick ⌘Tab back to the last window doesn't flash the list. Tab or an arrow shows it at once.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .toggleStyle(.switch)
+            .tint(alwaysOn)
         }
         .padding(.horizontal, 28)
         .padding(.top, 40)
