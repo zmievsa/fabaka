@@ -3,7 +3,8 @@ import os
 
 let log = Logger(subsystem: "com.zmievsa.flick", category: "flick")
 
-/// A window as the Switcher sees it. Immutable, so any thread can read it.
+/// A row of the Switcher: a window, or a running app with no windows (`wid` is `kCGNullWindowID`), which the
+/// Dock still shows. Immutable, so any thread can read it.
 struct WindowSnapshot {
     let wid: CGWindowID
     let pid: pid_t
@@ -13,6 +14,8 @@ struct WindowSnapshot {
     let app: NSRunningApplication
     let appName: String
     let icon: NSImage?
+
+    var isWindowless: Bool { wid == kCGNullWindowID }
 }
 
 private final class TrackedWindow {
@@ -36,6 +39,11 @@ private struct AppInfo {
     let app: NSRunningApplication
     let name: String
     let icon: NSImage?
+
+    var windowlessRow: WindowSnapshot {
+        WindowSnapshot(wid: kCGNullWindowID, pid: app.processIdentifier, element: AXUIElementCreateApplication(app.processIdentifier),
+                       title: "", isMinimized: false, app: app, appName: name, icon: icon)
+    }
 }
 
 /// A window found off the main thread, with its attributes already read.
@@ -71,7 +79,10 @@ final class WindowTracker {
     private var windows: [CGWindowID: TrackedWindow] = [:]
     private var recency: [CGWindowID] = []
     private var observers: [pid_t: AXObserver] = [:]
+    /// Every app Flick watches, including ones that never answer Accessibility.
     private var apps: [pid_t: AppInfo] = [:]
+    /// Apps by when they were last in front, most recent first.
+    private var appRecency: [pid_t] = []
     private var rejected: Set<CGWindowID> = []
     /// Apps Flick is still waiting on to answer Accessibility.
     private var registering: Set<pid_t> = []
@@ -80,6 +91,7 @@ final class WindowTracker {
 
     private let lock = NSLock()
     private var published: [WindowSnapshot] = []
+    private var publishedApps: [AppInfo] = []
 
     private var dumpSignal: DispatchSourceSignal?
 
@@ -115,18 +127,26 @@ final class WindowTracker {
 
     // MARK: - Reading (any thread)
 
-    /// Windows in Recency order, minus any the WindowServer no longer has and any the app ordered out.
+    /// Windows in Recency order, minus any the WindowServer no longer has and any the app ordered out, then
+    /// the Dock's apps that have no windows left, most recently used first.
     func snapshot() -> [WindowSnapshot] {
         lock.lock()
         var list = published
+        let apps = publishedApps
         lock.unlock()
-        guard !list.isEmpty, let onScreen = Self.onScreenStates(list.map(\.wid)) else { return list }
-        let dead = Set(list.map(\.wid)).filter { onScreen[$0] == nil }
-        if !dead.isEmpty {
-            DispatchQueue.main.async { for wid in dead { self.remove(wid) } }
+        if !list.isEmpty, let onScreen = Self.onScreenStates(list.map(\.wid)) {
+            let dead = Set(list.map(\.wid)).filter { onScreen[$0] == nil }
+            if !dead.isEmpty {
+                DispatchQueue.main.async { for wid in dead { self.remove(wid) } }
+            }
+            // Ordered-out windows stay tracked so they come back if the app shows them again.
+            list.removeAll { dead.contains($0.wid) || Self.isOrderedOut($0, onScreen: onScreen[$0.wid] == true) }
         }
-        // Ordered-out windows stay tracked so they come back if the app shows them again.
-        list.removeAll { dead.contains($0.wid) || Self.isOrderedOut($0, onScreen: onScreen[$0.wid] == true) }
+        let withWindows = Set(list.map(\.pid))
+        // Policy is read now: apps like OrbStack show in the Dock only while one of their windows is open.
+        list += apps.filter {
+            $0.app.activationPolicy == .regular && !$0.app.isTerminated && !withWindows.contains($0.app.processIdentifier)
+        }.map(\.windowlessRow)
         return list
     }
 
@@ -161,17 +181,20 @@ final class WindowTracker {
             return WindowSnapshot(wid: wid, pid: window.pid, element: window.element, title: window.title,
                                   isMinimized: window.isMinimized, app: info.app, appName: info.name, icon: info.icon)
         }
+        let appList = appRecency.compactMap { apps[$0] }
         lock.lock()
         published = list
+        publishedApps = appList
         lock.unlock()
     }
 
     private func dump() {
-        for (pid, info) in apps.sorted(by: { $0.value.name < $1.value.name }) {
+        for (pid, info) in apps.sorted(by: { $0.value.name < $1.value.name }) where observers[pid] != nil {
             let tracked = windows.values.filter { $0.pid == pid }.count
             log.notice("dump \(info.name, privacy: .public) pid \(pid, privacy: .public): \(tracked, privacy: .public) windows")
         }
-        let shown = snapshot().map { "\($0.appName): \($0.title)" }.joined(separator: " | ")
+        let shown = snapshot().map { $0.isWindowless ? "\($0.appName) (no windows)" : "\($0.appName): \($0.title)" }
+            .joined(separator: " | ")
         log.notice("dump shown \(shown, privacy: .public)")
         log.notice("dump total \(self.windows.count, privacy: .public), published \(self.published.count, privacy: .public), recency \(self.recency.count, privacy: .public), rejected \(self.rejected.count, privacy: .public)")
     }
@@ -185,6 +208,12 @@ final class WindowTracker {
         let pid = app.processIdentifier
         guard observers[pid] == nil, attempt > 0 || !registering.contains(pid), pid != selfPID, !app.isTerminated,
               !Rules.isExcluded(app), app.activationPolicy != .prohibited else { return }
+        if apps[pid] == nil {
+            // Known before it answers Accessibility, so a frozen app still gets a row you can quit it from.
+            apps[pid] = AppInfo(app: app, name: app.localizedName ?? "", icon: app.icon)
+            appRecency.append(pid)
+            publish()
+        }
         registering.insert(pid)
         // Off the main thread: an app that doesn't answer holds each call for the full messaging timeout.
         discovery.async {
@@ -225,7 +254,6 @@ final class WindowTracker {
         let pid = app.processIdentifier
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
         observers[pid] = observer
-        apps[pid] = AppInfo(app: app, name: app.localizedName ?? "", icon: app.icon)
         discover(pid: pid, bruteForce: true)
         // An app that is still starting answers before it has shown Accessibility all its windows, and never
         // announces the ones that already exist. At login that left windows missing until you clicked the app.
@@ -245,6 +273,7 @@ final class WindowTracker {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
         }
         apps[pid] = nil
+        appRecency.removeAll { $0 == pid }
         registering.remove(pid) // Its retries stop on their own, and a new app may reuse the pid.
         for (wid, window) in windows where window.pid == pid { remove(wid) }
         publish()
@@ -252,7 +281,12 @@ final class WindowTracker {
 
     private func frontAppChanged(_ app: NSRunningApplication) {
         let pid = app.processIdentifier
-        guard observers[pid] != nil else { return watch(app) }
+        if observers[pid] == nil { watch(app) }
+        if let index = appRecency.firstIndex(of: pid), index > 0 {
+            appRecency.insert(appRecency.remove(at: index), at: 0)
+            publish()
+        }
+        guard observers[pid] != nil else { return }
         promoteFocusedWindow(of: pid)
         discover(pid: pid, bruteForce: false)
     }

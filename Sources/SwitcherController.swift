@@ -125,7 +125,7 @@ final class SwitcherController {
     }
 
     private func closeSelected() {
-        guard windows.indices.contains(selection) else { return }
+        guard windows.indices.contains(selection), !windows[selection].isWindowless else { return }
         let wid = windows[selection].wid
         Actions.close(windows[selection])
         dropRows { $0.wid == wid }

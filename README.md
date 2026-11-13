@@ -11,7 +11,8 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
   - Return focuses the selected window, and Esc cancels.
   - A click on a row focuses that window.
   - W closes the selected window, and Q quits its app.
-- The list shows windows from every Space and every screen, including minimized windows, windows of hidden apps and full-screen windows. Apps with no windows are left out.
+- The list shows windows from every Space and every screen, including minimized windows, windows of hidden apps and full-screen windows.
+- Below the windows come the Dock's running apps that have no windows, including frozen ones, so Q quits them too. Choosing one works like clicking it in the Dock.
 - Most recently focused windows come first.
 - The Switcher appears on the screen of the focused window.
 - Fathom is never listed. Remote desktop and VM apps keep ⌘Tab while they are full screen.

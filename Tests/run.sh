@@ -71,7 +71,7 @@ flick_dump() {
         | grep " dump " | sed 's/.* dump /dump /'
 }
 
-# Rows the Switcher would show right now, as "App: title" separated by " | ".
+# Rows the Switcher would show right now, as "App: title" or "App (no windows)" separated by " | ".
 switcher_rows() {
     local line=$(flick_dump | grep "^dump shown" | tail -1)
     [[ -n "$line" ]] || return 1 # no dump came back
@@ -112,6 +112,25 @@ test__switcher__when_app_hides_its_windows_while_flick_starts__should_list_them_
     expect_no_row $0 "BusyApp: $title" || return
     rm $WORK/unready
     expect_row $0 "BusyApp: $title" 20
+}
+
+test__switcher__when_app_has_no_windows__should_list_the_app_until_it_shows_one() {
+    local title="Windowless app $RANDOM"
+    touch $WORK/unready
+    launch_busy_app "$title" $WORK/unready && start_flick && wait_until_flick_watches_busy_app || { fail $0; return; }
+    expect_row $0 "BusyApp (no windows)" 10
+    rm $WORK/unready
+    expect_row $0 "BusyApp: $title" 20
+    local rows=$(switcher_rows)
+    [[ "$rows" != *"BusyApp (no windows)"* ]] && print "PASS $0 (app row gone)" || fail "$0: app row still listed in: $rows"
+}
+
+test__switcher__when_app_is_frozen_while_flick_starts__should_list_the_app_so_you_can_quit_it() {
+    launch_busy_app "Frozen app $RANDOM" || { fail $0; return; }
+    kill -STOP $(pgrep -x BusyApp)
+    start_flick || { fail $0; return; }
+    expect_row $0 "BusyApp (no windows)" 10
+    kill -CONT $(pgrep -x BusyApp)
 }
 
 test__switcher__when_app_is_frozen_longer_than_a_minute_while_flick_starts__should_list_its_window_once_it_answers() {

@@ -90,7 +90,7 @@ private struct Row {
 
     init(_ window: WindowSnapshot) {
         icon = window.icon
-        appName = window.appName
+        appName = window.isWindowless ? "No windows" : window.appName
         title = window.title.isEmpty ? window.appName : window.title
         isMinimized = window.isMinimized
         isHidden = window.app.isHidden
