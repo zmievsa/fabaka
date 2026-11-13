@@ -45,12 +45,10 @@ Grant Accessibility when macOS asks. Fabaka starts working without a relaunch. Q
 
 ### Coming from Flick
 
-Fabaka used to be called Flick. Fabaka carries Flick's settings over on first launch, but macOS asks for Accessibility again because it's a new app to macOS.
+Fabaka used to be called Flick. Installing Fabaka replaces Flick.app and carries its settings over, but macOS asks for Accessibility again because it's a new app to macOS.
 
 ```sh
-brew uninstall --cask flick
-brew install zmievsa/tap/fabaka
-open /Applications/Fabaka.app
+brew update && brew install --cask zmievsa/tap/fabaka && open /Applications/Fabaka.app
 ```
 
 ## Build from source
