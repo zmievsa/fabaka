@@ -120,7 +120,7 @@ private let iconSize: CGFloat = 56
 private struct SettingsView: View {
     @StateObject private var model = ShelvesModel()
     @Namespace private var shelves
-    @AppStorage(SwitcherController.hideOnQuickTapKey) private var hideOnQuickTap = false
+    @AppStorage(SwitcherController.showDelayKey) private var quickTapDelay = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -146,24 +146,44 @@ private struct SettingsView: View {
             Divider()
                 .padding(.vertical, 20)
 
-            Toggle(isOn: $hideOnQuickTap) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Skip the Switcher on a quick tap")
-                        .font(.system(size: 13, weight: .medium))
-                    Text("Waits \(Int(SwitcherController.showDelay * 1000)) ms before showing it, so a quick ⌘Tab back to the last window doesn't flash the list. Tab or an arrow shows it at once.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .toggleStyle(.switch)
-            .tint(alwaysOn)
+            QuickTapDelay(milliseconds: $quickTapDelay)
         }
         .padding(.horizontal, 28)
         .padding(.top, 40)
         .padding(.bottom, 24)
         .frame(width: 600)
         .background(WindowMaterial().ignoresSafeArea())
+    }
+}
+
+/// How long the Switcher waits before it appears. 0 shows it at once.
+private struct QuickTapDelay: View {
+    @Binding var milliseconds: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Wait before showing the Switcher")
+                    .font(.system(size: 13, weight: .medium))
+                Spacer()
+                Text(milliseconds == 0 ? "Off" : "\(milliseconds) ms")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(milliseconds == 0 ? Color.secondary : alwaysOn)
+                    .contentTransition(.numericText())
+                    .animation(.easeOut(duration: 0.15), value: milliseconds)
+            }
+            // Snaps to 10 ms without the tick marks a stepped slider draws.
+            Slider(value: Binding(get: { Double(milliseconds) }, set: { milliseconds = Int(($0 / 10).rounded()) * 10 }),
+                   in: 0...300)
+                .tint(alwaysOn)
+            .accessibilityLabel("Wait before showing the Switcher")
+            .accessibilityValue(milliseconds == 0 ? "Off" : "\(milliseconds) milliseconds")
+            Text("A quick ⌘Tab back to the last window, released within the wait, switches without flashing the list. Tab or an arrow shows it at once.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

@@ -15,11 +15,10 @@ final class SwitcherController {
     private var switching = false
     private var windows: [WindowSnapshot] = []
     private var selection = 0
-    /// With the Settings option on, the panel waits this long before it appears. 71% of ⌘Tab presses (546
-    /// measured) are quick taps to the previous window, released within 100 ms; showing the panel for those
-    /// only makes it flash. Off by default: the wait itself annoyed its one user.
-    static let showDelay: TimeInterval = 0.12
-    static let hideOnQuickTapKey = "hideOnQuickTap"
+    /// How long the panel waits before it appears, in ms, set in Settings. 71% of ⌘Tab presses (546
+    /// measured) are quick taps to the previous window, released within 100 ms, and showing the panel for
+    /// those makes it flash. 0, the default, shows it at once with no timer at all: the wait annoyed its user.
+    static let showDelayKey = "quickTapDelayMs"
     /// Counts ⌘Tab presses, so a delayed show left over from an earlier press does nothing.
     private var press = 0
     private var panelShown = false
@@ -110,11 +109,12 @@ final class SwitcherController {
         let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         let start = windows.first?.pid == frontPID ? 1 : 0
         selection = backward ? windows.count - 1 : min(start, windows.count - 1)
-        guard UserDefaults.standard.bool(forKey: Self.hideOnQuickTapKey) else { return showPanel() }
+        let delay = UserDefaults.standard.integer(forKey: Self.showDelayKey)
+        guard delay > 0 else { return showPanel() }
         press += 1
         let press = press
         // Timed off the main thread, so a busy main thread can't make the panel late.
-        DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + Self.showDelay) { [weak self] in
+        DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + .milliseconds(delay)) { [weak self] in
             self?.onKeyboardThread { $0.showPanelIfPending(press) }
         }
     }
