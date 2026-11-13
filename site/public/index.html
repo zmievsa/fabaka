@@ -75,11 +75,12 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .gh:hover span{text-decoration:underline}
 
 /* ---------- FETCH ---------- */
-.fetch{overflow-x:clip;min-height:100svh;display:flex;flex-direction:column;padding-bottom:clamp(2.5rem,5vw,4rem)}
+body{min-height:100svh;display:flex;flex-direction:column}
+main{flex:1;display:flex;flex-direction:column}
+.fetch{overflow-x:clip;flex:1;display:flex;flex-direction:column;padding-bottom:clamp(2.5rem,5vw,4rem)}
 .hero{flex:1;display:grid;grid-template-columns:minmax(0,1fr);gap:2.25rem;align-items:center;padding-top:clamp(.75rem,2vw,1.5rem)}
 .act{display:grid;gap:1rem;max-width:34rem}
 .act .word{margin-bottom:.9rem}
-.how{font-size:1.0625rem;line-height:1.6;margin:0;max-width:46ch}
 .install{display:flex;align-items:center;gap:.5rem;background:var(--ink);color:var(--snow);border-radius:14px;padding:6px 6px 6px 18px;box-shadow:0 18px 34px -18px rgba(17,18,38,.75),0 2px 6px rgba(17,18,38,.18)}
 .install code{flex:1;min-width:0;font:500 .95rem/1.4 var(--mono);white-space:nowrap;padding:.7rem 0;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis}
 .install code::selection,.install code *::selection{background:var(--peri);color:var(--ink)}
@@ -96,7 +97,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .cp.done{background:var(--snow)}
 .cp.done .ok{display:block}.cp.done .cpy{display:none}
 .install .cp:focus-visible{outline-color:var(--snow)}
-.req{margin:0;font-size:.95rem;line-height:1.5}
 
 /* ---------- the stage: a collie on ⌘ and Tab, over the screen ---------- */
 .stage{margin:0;position:relative;width:min(100%,600px);justify-self:center;--dogw:clamp(230px,62vw,300px)}
@@ -140,11 +140,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .stick.drop{visibility:visible;opacity:0;transform:translate(-50%,40%) rotate(-24deg);transition:transform .32s cubic-bezier(.5,0,.9,.4),opacity .3s .05s,visibility 0s .4s}
 
 .box{position:relative;z-index:2}
-.cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.35rem 1.5rem;margin-top:1.1rem}
-.cap p{margin:0;font-size:1rem;line-height:1.45;text-wrap:pretty}
-.cap .slow{font-weight:600}
-.touch .try-k,.try-t{display:none}
-.touch .try-t{display:inline}
 
 .panel{
   position:relative;width:100%;padding:8px;border-radius:16px;
@@ -212,49 +207,8 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .box.open .win{display:none}
 
 /* ---------- ALREADY BACK (speed, real time) ---------- */
-.back{background:var(--ink);color:var(--snow);padding-block:clamp(4.5rem,9vw,8rem)}
-.back ::selection{background:var(--peri);color:var(--ink)}
-.back .head{display:grid;gap:1rem;margin-bottom:clamp(2.5rem,5vw,4rem)}
-.h2{margin:0;font:800 clamp(3.4rem,9vw,6rem)/.86 var(--display);font-stretch:75%;letter-spacing:-.02em;font-variation-settings:"opsz" 96}
-.h2 .dot{color:var(--peri)}
-.back .head p{margin:0;max-width:44ch;color:#C9CCE0;font-size:1.0625rem}
-.runs{display:grid;gap:clamp(2rem,4vw,2.75rem)}
-.run{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.9rem 1.5rem}
-.run .track{grid-column:1 / -1}
-.run h3{margin:0;font:600 1.0625rem/1.3 var(--display);color:#E6E7F2}
-.run h3 kbd{background:#2E2F3A;color:var(--snow);border-color:rgba(255,255,255,.18);box-shadow:0 2px 0 rgba(0,0,0,.6)}
-.run .ms{margin:0;font:800 clamp(2.6rem,6vw,4.5rem)/.85 var(--display);font-stretch:75%;letter-spacing:-.01em;font-variant-numeric:tabular-nums;min-width:3.6ch;text-align:right}
-.run .ms small{font-size:.42em;font-weight:700;margin-left:.15em;color:var(--peri)}
-.track{position:relative;height:56px;border-radius:10px;background:var(--ink-2);overflow:hidden;
-  background-image:repeating-linear-gradient(90deg,rgba(252,251,252,.16) 0 1px,transparent 1px calc(100% / 12));}
-.fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--v) / 60 * 100%);background:var(--peri);border-right:2px solid var(--snow);transform-origin:0 50%}
-.js .run:not(.go) .fill{transform:scaleX(0)}
-.run.go .fill{transform:none;transition:transform calc(var(--v) * 1ms) linear}
-.frame{position:absolute;top:-6px;bottom:-6px;left:calc(16.7 / 60 * 100%);border-left:2px dashed rgba(252,251,252,.55)}
-.scale{display:flex;justify-content:space-between;font:500 .8rem/1 var(--mono);color:#9C9FB8;font-variant-numeric:tabular-nums;margin-top:.15rem}
-.legend{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.75rem;margin-top:clamp(2rem,4vw,2.75rem);font-size:.95rem;color:#C9CCE0}
-.legend .fr{display:inline-flex;align-items:center;gap:.6rem}
-.legend .fr::before{content:"";width:0;height:18px;border-left:2px dashed rgba(252,251,252,.55)}
-.again{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;height:44px;padding:0 1.1rem;border-radius:10px;border:1.5px solid rgba(252,251,252,.4);background:transparent;color:var(--snow);font-weight:700;cursor:pointer;transition:background-color .15s,border-color .15s}
-.again:hover{background:#2E2F3A;border-color:var(--snow)}
-.again:focus-visible{outline-color:var(--peri)}
-.note{margin:1.5rem 0 0;font-size:.875rem;line-height:1.5;color:#9C9FB8;max-width:70ch}
-
-/* ---------- COMMANDS ---------- */
-.cmds{padding-block:clamp(4rem,8vw,7rem) clamp(3rem,6vw,5rem)}
-.cmds dl{margin:0;border-top:1.5px solid var(--ink)}
-.cmds .c{display:grid;grid-template-columns:minmax(0,1fr);gap:.5rem 3rem;padding:clamp(1.4rem,2.6vw,2rem) 0;border-bottom:1.5px solid var(--ink);align-items:center}
-.cmds dt{font:800 clamp(2.6rem,6.4vw,5rem)/.9 var(--display);font-stretch:75%;letter-spacing:-.015em;font-variation-settings:"opsz" 96}
-.cmds dt .dot{color:var(--snow)}
-.cmds dd{margin:0;font-size:clamp(1.0625rem,1.5vw,1.25rem);line-height:1.5;max-width:44ch;text-wrap:pretty}
-
-.close{display:grid;gap:1.25rem;justify-items:start;padding-top:clamp(3.5rem,7vw,5.5rem)}
-.close .lede{display:flex;align-items:center;gap:.8rem}
-.close .lede img{width:56px;height:56px}
-.close .install{width:min(100%,34rem)}
-
-/* ---------- footer ---------- */
-.foot{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 2rem;padding:1.6rem 0 2rem;border-top:1.5px solid var(--ink);margin-top:clamp(3rem,6vw,4.5rem)}
+.site-foot{background:var(--peri);color:var(--ink)}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 2rem;padding:1.6rem 0 2rem;border-top:1.5px solid var(--ink)}
 .foot .brand{font-size:1.05rem}
 .foot .brand img{width:26px;height:26px}
 .foot nav{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-left:auto}
@@ -263,13 +217,11 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .foot small{font-size:.9rem;color:var(--ink)}
 
 @media (min-width:760px){
-  .cmds .c{grid-template-columns:minmax(14rem,.9fr) minmax(0,1.1fr)}
 }
 @media (min-width:1080px){
   .hero{grid-template-columns:minmax(0,.92fr) minmax(0,1fr);column-gap:clamp(3rem,6vw,6rem)}
   .word{font-size:clamp(11rem,15vw,14.5rem)}
   .stage{justify-self:end}
-  .back .head{grid-template-columns:auto minmax(0,1fr);align-items:end;column-gap:4rem}
 }
 
 @media (max-width:560px){
@@ -284,8 +236,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   .wb{padding:16px}
   .code pre,.term pre{font-size:11.5px}
   .diff{font-size:11px}
-  .track{height:44px}
-  .again{margin-left:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -322,12 +272,10 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
     <div class="act">
       <h1 class="word" id="fetch-h"><span class="sr">Fabaka. </span>Fetch<span class="dot">.</span></h1>
       <p class="lede">Fabaka is a fast ⌘Tab for Mac.</p>
-      <p class="how">Hold <kbd data-key="cmd">⌘</kbd> and press <kbd data-key="tab">Tab</kbd>: every window is listed, most recent first. Release <kbd>⌘</kbd> to jump to the selected one.</p>
       <div class="install">
         <code id="cmd"><span class="pr" aria-hidden="true">$</span>brew install --cask zmievsa/tap/fabaka</code>
         <button class="cp" type="button" data-copy data-label="Copy"><svg class="cpy" aria-hidden="true"><use href="#u-copy"/></svg><svg class="ok" aria-hidden="true"><use href="#u-ok"/></svg><span class="lbl">Copy</span></button>
       </div>
-      <p class="req">macOS 26 on Apple silicon.</p>
     </div>
 
     <figure class="stage" id="stage">
@@ -412,72 +360,23 @@ building…
         </div>
       </div>
 
-      <figcaption class="cap">
-        <p class="slow">The dog is slowed down so you can watch. The list isn’t.</p>
-        <p class="try"><span class="try-k">Your turn: hold <kbd>⌥</kbd> and press <kbd>Tab</kbd>.</span><span class="try-t">Your turn: tap Tab, then ⌘ to let go.</span></p>
-      </figcaption>
       <p class="sr" role="status" id="sw-status"></p>
     </figure>
   </div>
 </section>
 
-<section class="sec back" id="back" aria-labelledby="back-h">
+<footer class="sec site-foot">
   <div class="wrap">
-    <div class="head">
-      <h2 class="h2" id="back-h">Already back<span class="dot">.</span></h2>
-      <p>Two timings from Fabaka, drawn at their real speed. If you saw the bars grow, your screen was slow, not the dog.</p>
-    </div>
-
-    <div class="runs">
-      <div class="run" id="run-1" style="--v:1.6">
-        <h3>Press <kbd>⌘</kbd><kbd>Tab</kbd>, the list is ready</h3>
-        <p class="ms">1.6<small>ms</small></p>
-        <div class="track"><span class="fill"></span><span class="frame" aria-hidden="true"></span></div>
-      </div>
-      <div class="run" id="run-2" style="--v:50">
-        <h3>Let go of <kbd>⌘</kbd>, the window is on top</h3>
-        <p class="ms">50<small>ms</small></p>
-        <div class="track"><span class="fill"></span><span class="frame" aria-hidden="true"></span></div>
-      </div>
-      <div class="scale" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60 ms</span></div>
-    </div>
-
-    <div class="legend">
-      <span class="fr">One frame of a 60 Hz screen</span>
-      <button class="again" type="button" id="again">Throw again</button>
-    </div>
-    <p class="note">Medians over 617 presses in a week on the author’s M3 Pro. 95% of the time the list was ready within 16 ms.</p>
-  </div>
-</section>
-
-<section class="sec cmds" aria-label="What else">
-  <div class="wrap">
-    <dl>
-      <div class="c"><dt>Find it<span class="dot">.</span></dt><dd>Every window from every Space and every screen, minimized and hidden ones included.</dd></div>
-      <div class="c"><dt>Drop it<span class="dot">.</span></dt><dd>While the list is open, <kbd>W</kbd> closes the selected window and <kbd>Q</kbd> quits its app. Apps left running with no windows are listed too, so <kbd>Q</kbd> cleans them up.</dd></div>
-      <div class="c"><dt>Leave it<span class="dot">.</span></dt><dd>Accessibility permission only, never Screen Recording. Icons and titles, no window thumbnails.</dd></div>
-      <div class="c"><dt>Good dog<span class="dot">.</span></dt><dd>Free and open source under MIT. No account, no telemetry, no menu-bar icon.</dd></div>
-    </dl>
-
-    <div class="close">
-      <p class="lede"><img src="/assets/fabaka-icon.webp" alt="" width="56" height="56">Here, Fabaka.</p>
-      <div class="install">
-        <code><span class="pr" aria-hidden="true">$</span>brew install --cask zmievsa/tap/fabaka</code>
-        <button class="cp" type="button" data-copy data-label="Copy"><svg class="cpy" aria-hidden="true"><use href="#u-copy"/></svg><svg class="ok" aria-hidden="true"><use href="#u-ok"/></svg><span class="lbl">Copy</span></button>
-      </div>
-    </div>
-
-    <footer class="foot">
+    <div class="foot">
       <a class="brand" href="#fetch"><img src="/assets/fabaka-icon.webp" alt="" width="26" height="26">Fabaka</a>
       <nav aria-label="Project">
-        <a href="https://github.com/zmievsa/fabaka">Source</a>
         <a href="https://github.com/zmievsa/fabaka/releases">Releases</a>
         <a href="https://github.com/zmievsa/fabaka/issues">Report an issue</a>
       </nav>
       <small>© 2026 Stanislav Zmiev</small>
-    </footer>
+    </div>
   </div>
-</section>
+</footer>
 <p class="sr" role="status" id="copy-status"></p>
 </main>
 
@@ -517,7 +416,6 @@ building…
   const box = $('#box'), rows = $('#fab-rows'), list = $('ul', rows), rig = $('#rig');
   const pawR = $('#paw-r'), stick = $('#stick'), status = $('#sw-status');
   const kCmd = $('#k-cmd'), kTab = $('#k-tab');
-  const kbdCmd = $('.how [data-key="cmd"]'), kbdTab = $('.how [data-key="tab"]');
   const W = {
     app:  ['editor', 'app.swift', 'Editor'],
     lis:  ['browser', 'Flights to Lisbon', 'Browser'],
@@ -545,16 +443,16 @@ building…
     $$('.row', rows).forEach((r, k) => r.classList.toggle('on', k === sel));
   };
   const front = k => $$('.win', box).forEach(w => w.classList.toggle('front', w.dataset.w === k));
-  const press = (key, kbd, ms = 110) => {
-    key.classList.add('down'); kbd && kbd.classList.add('down');
+  const press = (key, ms = 110) => {
+    key.classList.add('down');
     clearTimeout(key._t);
-    key._t = setTimeout(() => { key.classList.remove('down'); kbd && kbd.classList.remove('down'); }, ms);
+    key._t = setTimeout(() => key.classList.remove('down'), ms);
   };
 
   function cmdDown() {
     if (held) return;
     held = true;
-    rig.classList.add('cmd'); kCmd.classList.add('down'); kbdCmd.classList.add('down');
+    rig.classList.add('cmd'); kCmd.classList.add('down');
     kCmd.setAttribute('aria-pressed', 'true');
   }
   // the list and the selection change in the same frame the key lands: no fade, no wait
@@ -562,13 +460,13 @@ building…
     if (!held) cmdDown();
     if (!open) { open = true; render(); select(d > 0 ? 1 : order.length - 1); box.classList.add('open'); }
     else select(sel + d);
-    press(kTab, kbdTab);
+    press(kTab);
     status.textContent = W[order[sel]][1];
   }
   function cmdUp(commit = true) {
     if (!held) return;
     held = false;
-    rig.classList.remove('cmd'); kCmd.classList.remove('down'); kbdCmd.classList.remove('down');
+    rig.classList.remove('cmd'); kCmd.classList.remove('down');
     kCmd.setAttribute('aria-pressed', 'false');
     if (!open) return;
     open = false;
@@ -658,16 +556,6 @@ building…
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; })).observe(box);
     loop();
   }
-
-  /* ---------- real-time bars ---------- */
-  const runs = $$('.run');
-  const throwIt = () => {
-    runs.forEach(r => r.classList.remove('go'));
-    void document.body.offsetWidth;
-    requestAnimationFrame(() => runs.forEach(r => r.classList.add('go')));
-  };
-  new IntersectionObserver((es, o) => es.forEach(e => { if (e.isIntersecting) { throwIt(); o.disconnect(); } }), { threshold: .6 }).observe($('.runs'));
-  $('#again').addEventListener('click', throwIt);
 })();
 </script>
 </body>
