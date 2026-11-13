@@ -56,10 +56,11 @@ brew update && brew install --cask zmievsa/tap/fabaka && open /Applications/Faba
 ## Build from source
 
 ```sh
-make install   # builds, signs with your Developer ID or Apple Development cert if you have one, copies to /Applications, starts it
-make uninstall # stops it and removes it
-make logs      # streams its log
-make test      # end-to-end tests against a stand-in busy app; stops the installed Fabaka for ~2 minutes
-make release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
-make site      # deploys site/public to fabaka.dev (Cloudflare Workers static assets)
+just install   # builds, signs with your Developer ID or Apple Development cert if you have one, copies to /Applications, starts it
+just logs      # streams its log
+just test      # end-to-end tests against a stand-in busy app; stops the installed Fabaka for ~2 minutes
+just release   # notarizes, publishes a GitHub release and bumps the Homebrew cask (maintainer only)
+just deploy    # deploys site/public to fabaka.dev (Cloudflare Workers static assets)
 ```
+
+`just` wraps the Makefile, which does the actual build; `make uninstall` stops Fabaka and removes it. The site is plain HTML ([ADR 0003](docs/adr/0003-plain-html-site.md)); edit `site/public/index.html` directly. Work is tracked in beads (`bd`).

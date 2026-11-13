@@ -40,11 +40,9 @@
 html{-webkit-text-size-adjust:100%;scrollbar-color:var(--ink) var(--peri-tint);background:var(--peri)}
 body{margin:0;background:var(--snow);color:var(--ink);font:400 1.0625rem/1.55 var(--display);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;overflow-x:clip}
 ::selection{background:var(--ink);color:var(--snow)}
-.drop ::selection{background:var(--peri);color:var(--ink)}
 a{color:inherit;text-underline-offset:.22em;text-decoration-thickness:1.5px}
 button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
-.drop :focus-visible{outline-color:var(--peri)}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .wrap{width:min(100%,1312px);margin-inline:auto}
 .sec{position:relative;padding-inline:var(--gut)}
@@ -56,8 +54,6 @@ button{font:inherit;color:inherit}
   font-variation-settings:"opsz" 96;
 }
 .word .dot{color:var(--snow)}
-.quiet .word .dot{color:var(--peri-deep)}
-.drop .word .dot{color:var(--peri)}
 .lede{font:600 clamp(1.35rem,2vw,1.75rem)/1.18 var(--display);letter-spacing:-.015em;margin:0;text-wrap:balance}
 .copy p{margin:0;max-width:40ch;text-wrap:pretty}
 
@@ -72,7 +68,7 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 
 /* ---------- FETCH (periwinkle) ---------- */
 .fetch{background:var(--peri);padding-bottom:clamp(3.5rem,7vw,6rem)}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:68px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:68px;position:relative;z-index:2}
 .brand{display:flex;align-items:center;gap:.6rem;font:700 1.35rem/1 var(--display);letter-spacing:-.02em;text-decoration:none}
 .brand img{width:38px;height:38px;display:block;margin-left:-3px}
 .gh{display:inline-flex;align-items:center;gap:.5rem;font-weight:600;text-decoration:none;padding:.45rem .2rem}
@@ -168,11 +164,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
 .dog.hop .bob{animation:hop .42s var(--out)}
 @keyframes hop{0%{transform:none}35%{transform:translateY(-12px)}100%{transform:none}}
 
-.ctl{flex:none;display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .85rem .45rem .7rem;border:1.5px solid currentColor;border-radius:999px;background:transparent;font-weight:600;font-size:.95rem;cursor:pointer;transition:background-color .15s,color .15s}
-.ctl svg{width:15px;height:15px}
-.fetch .ctl:hover{background:var(--ink);color:var(--peri)}
-.ctl .pl{display:none}.ctl.paused .pl{display:block}.ctl.paused .pa{display:none}
-.js:not(.motion) .fetch .ctl{display:none}
 .instant,.instant *{transition:none!important;animation:none!important}
 
 @media (min-width:1080px){
@@ -182,78 +173,15 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   .box-fig{margin-top:-1.4rem;padding-top:120px}
 }
 
-/* ---------- QUIET (white) ---------- */
-.quiet{background:var(--snow);padding-block:clamp(4.5rem,10vw,9rem)}
-.quiet-grid{display:grid;gap:2.5rem;grid-template-areas:"copy" "demo"}
-.quiet .copy{grid-area:copy;display:grid;gap:1.4rem;align-content:center}
-.quiet-demo{grid-area:demo;margin:0;max-width:560px}
-.quiet .panel{background:#1F2029}
-.quiet .row .t{position:relative}
-.quiet .row .t::after{content:"";position:absolute;left:0;right:0;top:52%;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .32s var(--out)}
-.quiet .row.hush .t::after{transform:scaleX(1)}
-.quiet .row.hush{color:rgba(244,244,248,.62)}
-.quiet .row.hush .ic{opacity:.5}
-.quiet .row{transition:color .3s}
-.quiet .row .ic{transition:opacity .3s}
-.quiet .tile{width:28px;height:28px;flex:none;border-radius:7px;background:#3A3B4A;display:grid;place-items:center}
-.quiet .tile svg{width:17px;height:17px;color:#fff}
-.quiet .row.on .tile{background:var(--peri)}
-.quiet .row.on .tile svg{color:var(--ink)}
-.quiet figcaption{margin-top:1rem;font-size:1rem;line-height:1.45;color:var(--ink-2);max-width:44ch}
-@media (min-width:1080px){
-  .quiet-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"demo copy";column-gap:clamp(3rem,6vw,6rem);align-items:center}
-}
-
-/* ---------- DROP IT (black) ---------- */
-.drop{background:var(--ink);color:var(--snow);padding-block:clamp(4.5rem,10vw,9rem)}
-.drop-grid{display:grid;gap:2.5rem}
-.drop .copy{display:grid;gap:1.4rem;align-content:start}
-.drop .copy p{color:rgba(252,251,252,.76)}
-.drop .copy .lede{color:var(--snow)}
-.drop kbd{background:#2C2D35;color:var(--snow);border-color:rgba(255,255,255,.22);box-shadow:0 2px 0 rgba(0,0,0,.9)}
-.drop-demo{display:flex;gap:clamp(1.25rem,3vw,2.5rem);align-items:flex-start}
-.drop .panel{background:rgba(46,47,60,.92);border-color:rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 40px 70px -30px rgba(0,0,0,.8)}
-.drop .rows{outline:none}
-.drop .rows:focus-visible{outline:3px solid var(--peri);outline-offset:5px;border-radius:10px}
-.drop .row{cursor:pointer}
-.drop .hl{transition:transform .07s ease-out,opacity .18s}
-.drop .dropping .hl{opacity:0}
-.ghost{position:absolute;left:0;right:0;z-index:2;background:var(--peri-deep);border-radius:8px;pointer-events:none;transform-origin:20% 50%;
-  animation:fall .8s cubic-bezier(.55,0,.8,.4) forwards}
-.ghost .a{color:rgba(255,255,255,.9)}
-@keyframes fall{0%{transform:none;opacity:1}20%{transform:translateY(-6px) rotate(-1deg);opacity:1}100%{transform:translate(18px,190px) rotate(11deg);opacity:0}}
-.empty{display:none;height:var(--row);align-items:center;padding:0 12px;font-size:13px;color:rgba(235,235,245,.64)}
-.rows.is-empty .empty{display:flex}
-.keycol{flex:none;display:grid;justify-items:center;gap:.6rem;padding-top:6px}
-.qkey{
-  width:86px;height:86px;border-radius:16px;border:1px solid rgba(255,255,255,.18);cursor:pointer;
-  background:linear-gradient(#34353F,#2A2B33);color:var(--snow);font:600 30px/1 var(--sys);
-  box-shadow:0 5px 0 #0B0B0D,0 14px 26px -10px rgba(0,0,0,.8);transition:transform .07s,box-shadow .07s;
-}
-.qkey:hover{border-color:var(--peri)}
-.qkey.down,.qkey:active{transform:translateY(4px);box-shadow:0 1px 0 #0B0B0D,0 6px 12px -8px rgba(0,0,0,.8)}
-.keycap-label{font-size:.9rem;color:rgba(252,251,252,.76);text-align:center}
-.drop .ctl{margin-top:.4rem;color:var(--snow)}
-.drop .ctl:hover{background:var(--snow);color:var(--ink)}
-@media (min-width:1080px){
-  .drop-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);column-gap:clamp(3rem,6vw,6rem);row-gap:3.5rem}
-  .drop .word{grid-column:1/-1}
-  .drop-demo{justify-content:flex-end}
-  .drop .panel{max-width:520px}
-}
-
-/* ---------- THAT'LL DO ---------- */
-.done{background:var(--peri);padding-block:clamp(3.5rem,8vw,6rem) 2rem}
-.done-grid{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1.5rem 2rem}
-.done h2{margin:0;font:800 clamp(3.25rem,7vw,5.75rem)/.86 var(--display);font-stretch:75%;letter-spacing:-.02em}
-.done-act{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1.5rem;font-weight:600}
-.cp2{display:inline-flex;align-items:center;gap:.45rem;height:48px;padding:0 1.15rem;border:0;border-radius:12px;background:var(--ink);color:var(--snow);font:700 1rem/1 var(--display);cursor:pointer}
-.cp2:hover{background:#000}
-.cp2 svg{width:16px;height:16px}
-.cp2 .ok{display:none}.cp2.done .ok{display:block}.cp2.done .cpy{display:none}
-.foot{display:flex;align-items:center;gap:1rem;margin-top:clamp(2.5rem,5vw,4rem);padding-top:1.25rem;border-top:1.5px solid var(--ink);font-size:.95rem}
-.foot .brand{font-size:1.1rem}
-.foot .brand img{width:30px;height:30px}
+/* ---------- footer ---------- */
+.site-foot{background:var(--peri);color:var(--ink)}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 2rem;padding:1.6rem 0 2rem;border-top:1.5px solid var(--ink)}
+.foot .brand{font-size:1.05rem}
+.foot .brand img{width:26px;height:26px}
+.foot nav{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;margin-left:auto}
+.foot nav a{font-weight:600;text-decoration:none}
+.foot nav a:hover{text-decoration:underline;text-underline-offset:.2em}
+.foot small{font-size:.9rem;color:var(--ink)}
 
 /* ---------- phone ---------- */
 @media (max-width:560px){
@@ -273,12 +201,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   .wb{padding:16px}
   .code pre{font-size:11.5px}
   .diff{font-size:11px}
-  .cap{flex-direction:column}
-  .drop-demo{flex-direction:column-reverse;align-items:stretch}
-  .keycol{grid-template-columns:auto 1fr auto;align-items:center;justify-items:start;padding-top:0}
-  .qkey{width:64px;height:64px;font-size:24px;border-radius:13px}
-  .keycap-label{text-align:left}
-  .drop .ctl{margin-top:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -299,16 +221,8 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   <symbol id="i-design" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#EA580C"/><circle cx="13" cy="13" r="5.2" fill="#fff"/><rect x="15" y="15" width="9.5" height="9.5" rx="2" fill="#FED7AA"/></symbol>
   <symbol id="g-min" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 8h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
   <symbol id="g-hid" viewBox="0 0 16 16"><path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.2 13.2 2.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
-  <symbol id="q-access" viewBox="0 0 16 16"><circle cx="8" cy="3.2" r="1.5" fill="currentColor"/><path d="M3 5.8l5 1 5-1M8 6.8v3.2M8 10l-2.3 4M8 10l2.3 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="q-rec" viewBox="0 0 16 16"><rect x="1.8" y="3" width="12.4" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="7.5" r="2" fill="currentColor"/><path d="M5.5 14.2h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
-  <symbol id="q-acct" viewBox="0 0 16 16"><circle cx="8" cy="5.6" r="2.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 14c.6-2.6 2.6-4 5-4s4.4 1.4 5 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
-  <symbol id="q-tele" viewBox="0 0 16 16"><circle cx="8" cy="11.5" r="1.3" fill="currentColor"/><path d="M5.2 8.9a4 4 0 0 1 5.6 0M2.8 6.4a7.4 7.4 0 0 1 10.4 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
-  <symbol id="q-menu" viewBox="0 0 16 16"><rect x="1.8" y="2.5" width="12.4" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.8 5.6h12.4" stroke="currentColor" stroke-width="1.4"/><circle cx="11.6" cy="4.05" r=".7" fill="currentColor"/></symbol>
   <symbol id="u-copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 3.2V3a1 1 0 0 0-1-1H4a1.5 1.5 0 0 0-1.5 1.5V9a1 1 0 0 0 1 1h.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="u-ok" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="u-again" viewBox="0 0 16 16"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4.2 1.8v3h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="u-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="u-play" viewBox="0 0 16 16"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor"/></symbol>
   <symbol id="u-gh" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></symbol>
 </svg>
 
@@ -376,87 +290,23 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
           </div>
         </div>
       </div>
-      <figcaption class="cap">
-        <button class="ctl" type="button" id="fetch-pause" aria-pressed="false"><svg class="pa" aria-hidden="true"><use href="#u-pause"/></svg><svg class="pl" aria-hidden="true"><use href="#u-play"/></svg><span class="lbl">Pause</span></button>
-      </figcaption>
     </figure>
 
   </div>
 </section>
 
-<!-- ================= QUIET: minimal ================= -->
-<section class="sec quiet" id="quiet" aria-labelledby="quiet-h">
-  <div class="wrap quiet-grid">
-    <div class="copy">
-      <h2 class="word" id="quiet-h">Quiet<span class="dot">.</span></h2>
-      <p class="lede">A plain list of windows, and nothing else.</p>
-    </div>
-    <figure class="quiet-demo" id="quiet-demo">
-      <div class="panel">
-        <div class="rows" style="--i:0">
-          <span class="hl" aria-hidden="true"></span>
-          <ul>
-            <li class="row on"><span class="tile"><svg aria-hidden="true"><use href="#q-access"/></svg></span><span class="t">Accessibility</span><span class="a">The only permission</span></li>
-            <li class="row hush"><span class="tile"><svg aria-hidden="true"><use href="#q-rec"/></svg></span><span class="t">Screen Recording</span><span class="a">Never</span></li>
-            <li class="row hush"><span class="tile"><svg aria-hidden="true"><use href="#q-acct"/></svg></span><span class="t">Account</span><span class="a">None</span></li>
-            <li class="row hush"><span class="tile"><svg aria-hidden="true"><use href="#q-tele"/></svg></span><span class="t">Telemetry</span><span class="a">None</span></li>
-            <li class="row hush"><span class="tile"><svg aria-hidden="true"><use href="#q-menu"/></svg></span><span class="t">Menu-bar icon</span><span class="a">None</span></li>
-          </ul>
-        </div>
-      </div>
-      <figcaption>Icons and titles, no window thumbnails.</figcaption>
-    </figure>
-  </div>
-</section>
-
-<!-- ================= DROP IT: W and Q ================= -->
-<section class="sec drop" id="drop" aria-labelledby="drop-h">
-  <div class="wrap drop-grid">
-    <h2 class="word" id="drop-h">Drop it<span class="dot">.</span></h2>
-    <div class="copy">
-      <p class="lede">Apps left running with no windows are listed too, so <kbd>Q</kbd> cleans them up.</p>
-      <p>While the list is open, <kbd>W</kbd> closes the selected window and <kbd>Q</kbd> quits its app.</p>
-    </div>
-    <div class="drop-demo" id="drop-demo">
-      <div class="panel">
-        <div class="rows" id="drop-rows" style="--i:4" role="listbox" tabindex="0" aria-label="Switcher list. Arrow keys move, Q quits the selected app." aria-activedescendant="d5">
-          <span class="hl" aria-hidden="true"></span>
-          <ul>
-            <li class="row" id="d1" role="option" aria-selected="false" data-app="Mail"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="t">Inbox (3)</span><span class="a">Mail</span></li>
-            <li class="row hid" id="d2" role="option" aria-selected="false" data-app="Design"><svg class="ic" aria-hidden="true"><use href="#i-design"/></svg><span class="t">Logo v4</span><span class="a"><svg class="g" aria-hidden="true"><use href="#g-hid"/></svg>Design</span></li>
-            <li class="row min" id="d3" role="option" aria-selected="false" data-app="Notes"><svg class="ic" aria-hidden="true"><use href="#i-notes"/></svg><span class="t">Groceries</span><span class="a"><svg class="g" aria-hidden="true"><use href="#g-min"/></svg>Notes</span></li>
-            <li class="row" id="d4" role="option" aria-selected="false" data-app="Chat"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span class="t">Team</span><span class="a">Chat</span></li>
-            <li class="row on" id="d5" role="option" aria-selected="true" data-app="Music"><svg class="ic" aria-hidden="true"><use href="#i-music"/></svg><span class="t">Music</span><span class="a">No windows</span></li>
-          </ul>
-          <div class="empty">Nothing left running.</div>
-        </div>
-      </div>
-      <div class="keycol">
-        <button class="qkey" data-impeccable-ignore="hard-offset-shadow" type="button" id="qkey" aria-label="Press Q: quit the selected app">Q</button>
-        <span class="keycap-label">Quit</span>
-        <button class="ctl" type="button" id="drop-again"><svg aria-hidden="true"><use href="#u-again"/></svg>Again</button>
-      </div>
-    </div>
-  </div>
-  <p class="sr" role="status" id="drop-status"></p>
-</section>
+<p class="sr" role="status" id="copy-status"></p>
 </main>
 
-<!-- ================= THAT'LL DO ================= -->
-<footer class="sec done">
-  <div class="wrap">
-    <div class="done-grid">
-      <h2>That’ll do.</h2>
-      <div class="done-act">
-        <a href="https://github.com/zmievsa/fabaka">Source on GitHub</a>
-        <button class="cp2" type="button" data-copy data-label="Copy the install command"><svg class="cpy" aria-hidden="true"><use href="#u-copy"/></svg><svg class="ok" aria-hidden="true"><use href="#u-ok"/></svg><span class="lbl">Copy the install command</span></button>
-      </div>
-    </div>
-    <div class="foot">
-      <a class="brand" href="#fetch"><img src="../../assets/fabaka-icon.webp" alt="" width="30" height="30">Fabaka</a>
-    </div>
+<footer class="sec site-foot">
+  <div class="wrap foot">
+    <a class="brand" href="#fetch"><img src="../../assets/fabaka-icon.webp" alt="" width="26" height="26">Fabaka</a>
+    <nav aria-label="Project">
+      <a href="https://github.com/zmievsa/fabaka/releases">Releases</a>
+      <a href="https://github.com/zmievsa/fabaka/issues">Report an issue</a>
+    </nav>
+    <small>© 2026 Stanislav Zmiev</small>
   </div>
-  <p class="sr" role="status" id="copy-status"></p>
 </footer>
 
 <script>
@@ -492,7 +342,6 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   /* ---------- FETCH: a loop of real ⌘Tab presses ---------- */
   const box = $('#box'), rows = $('#fab-rows'), list = $('ul', rows), dog = $('#dog');
   const kCmd = $('[data-key="cmd"]'), kTab = $('[data-key="tab"]');
-  const pauseBtn = $('#fetch-pause');
   const W = {
     app:  ['editor', 'app.swift', 'Editor'],
     lis:  ['browser', 'Flights to Lisbon', 'Browser'],
@@ -516,8 +365,8 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
   const front = k => $$('.win', box).forEach(w => w.classList.toggle('front', w.dataset.w === k));
   const tap = () => { kTab.classList.add('down'); setTimeout(() => kTab.classList.remove('down'), 110); };
 
-  let paused = false, visible = true;
-  const gate = async () => { while (paused || !visible || document.hidden) await sleep(150); };
+  let visible = true;
+  const gate = async () => { while (!visible || document.hidden) await sleep(150); };
   const step = async ms => { await sleep(ms); await gate(); };
 
   async function loop() {
@@ -547,96 +396,11 @@ kbd.down{transform:translateY(2px);box-shadow:0 0 0 rgba(27,27,27,.5)}
       await step(1100);
     }
   }
-  pauseBtn.addEventListener('click', () => {
-    paused = !paused;
-    pauseBtn.classList.toggle('paused', paused);
-    pauseBtn.setAttribute('aria-pressed', paused);
-    $('.lbl', pauseBtn).textContent = paused ? 'Play' : 'Pause';
-  });
   if (motion) {
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; })).observe(box);
     loop();
   }
 
-  /* ---------- QUIET: everything but Accessibility goes quiet ---------- */
-  const hush = $$('#quiet-demo .row.hush');
-  if (motion) {
-    hush.forEach(r => r.classList.remove('hush'));
-    const qo = new IntersectionObserver(es => es.forEach(e => {
-      if (!e.isIntersecting || e.intersectionRatio < .5) return;
-      qo.disconnect();
-      hush.forEach((r, i) => setTimeout(() => r.classList.add('hush'), 450 + i * 240));
-    }), { threshold: [0, .5] });
-    qo.observe($('#quiet-demo'));
-  }
-
-  /* ---------- DROP IT ---------- */
-  const dRows = $('#drop-rows'), dList = $('ul', dRows), qkey = $('#qkey'), dStatus = $('#drop-status');
-  const dropInitial = dList.innerHTML;
-  let dsel = 4;
-  const live = () => $$('.row:not(.gone)', dRows);
-  function dSet(i) {
-    const rs = live();
-    dRows.classList.toggle('is-empty', !rs.length);
-    if (!rs.length) { dRows.removeAttribute('aria-activedescendant'); $('.hl', dRows).style.opacity = 0; return; }
-    $('.hl', dRows).style.opacity = '';
-    dsel = Math.max(0, Math.min(i, rs.length - 1));
-    dRows.style.setProperty('--i', dsel);
-    rs.forEach((r, k) => { r.classList.toggle('on', k === dsel); r.setAttribute('aria-selected', k === dsel); });
-    dRows.setAttribute('aria-activedescendant', rs[dsel].id);
-  }
-  function quit() {
-    const rs = live(); if (!rs.length) return;
-    const app = rs[dsel].dataset.app;
-    qkey.classList.add('down'); setTimeout(() => qkey.classList.remove('down'), 150);
-    const victims = rs.filter(r => r.dataset.app === app);
-    const keep = rs.filter(r => r.dataset.app !== app);
-    const after = rs.slice(dsel + 1).find(r => r.dataset.app !== app);
-    const nextIdx = after ? keep.indexOf(after) : keep.length - 1;
-    if (motion) {
-      dRows.classList.add('dropping');
-      victims.forEach(r => {
-        const g = r.cloneNode(true);
-        g.removeAttribute('id'); g.removeAttribute('role'); g.setAttribute('aria-hidden', 'true');
-        g.classList.add('ghost'); g.style.top = r.offsetTop + 'px';
-        dRows.append(g);
-        g.addEventListener('animationend', () => g.remove());
-      });
-      victims.forEach(r => r.classList.add('gone'));
-      setTimeout(() => { victims.forEach(r => r.remove()); dSet(nextIdx); dRows.classList.remove('dropping'); }, 470);
-    } else {
-      victims.forEach(r => r.remove()); dSet(nextIdx);
-    }
-    dStatus.textContent = `${app} quit.`;
-  }
-  function resetDrop() { $$('.ghost', dRows).forEach(g => g.remove()); dList.innerHTML = dropInitial; dSet(4); }
-  qkey.addEventListener('click', quit);
-  $('#drop-again').addEventListener('click', () => { resetDrop(); dStatus.textContent = 'List restored.'; });
-  dList.addEventListener('click', e => {
-    const r = e.target.closest('.row'); if (!r || r.classList.contains('gone')) return;
-    dSet(live().indexOf(r)); dRows.focus({ preventScroll: true });
-  });
-  dRows.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); dSet(dsel + 1); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); dSet(dsel - 1); }
-  });
-  let dropInView = false;
-  new IntersectionObserver(es => es.forEach(e => { dropInView = e.isIntersecting; })).observe($('#drop'));
-  addEventListener('keydown', e => {
-    if (e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== 'q') return;
-    if (!dropInView && document.activeElement !== dRows) return;
-    if (e.target.closest && e.target.closest('input,textarea,[contenteditable]')) return;
-    e.preventDefault(); quit();
-  });
-  if (motion) {
-    let played = false;
-    const dio = new IntersectionObserver(es => es.forEach(e => {
-      if (played || !e.isIntersecting || e.intersectionRatio < .45) return;
-      played = true; dio.disconnect();
-      setTimeout(() => { if (live()[dsel] && live()[dsel].dataset.app === 'Music') quit(); }, 800);
-    }), { threshold: [0, .45] });
-    dio.observe($('#drop-demo'));
-  }
 })();
 </script>
 </body>
