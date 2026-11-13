@@ -12,11 +12,17 @@ A personal ⌘Tab window switcher for macOS 26. It does what AltTab did for me, 
   - A click on a row focuses that window.
   - W closes the selected window, and Q quits its app.
 - The list shows windows from every Space and every screen, including minimized windows, windows of hidden apps and full-screen windows.
-- Below the windows come the Dock's running apps that have no windows, including frozen ones, so Q quits them too. Choosing one works like clicking it in the Dock.
+- Below the windows come the Dock's running apps that have no windows, including frozen ones, so Q quits them too. Choosing one works like clicking it in the Dock. Resident apps are left out.
 - Most recently focused windows come first.
 - The Switcher appears on the screen of the focused window.
 - Fathom is never listed. Remote desktop and VM apps keep ⌘Tab while they are full screen.
-- Flick has no settings, no menu-bar icon, no auto-updates and no telemetry. It starts at login.
+- Flick has one setting, Resident apps, behind its menu-bar icon. No auto-updates and no telemetry. It starts at login.
+
+## Resident apps
+
+Some apps run all the time on purpose: Tailscale keeps the VPN up, Ghostty answers its quick-terminal hotkey, macOS restarts Finder. With no windows open they aren't leftovers to quit, so ⌘Tab doesn't list them. Their windows are still listed.
+
+Open Settings from the menu-bar icon (or open Flick.app again) and click an app to move it between the Stays and Flickable shelves. Apps that aren't running can be dragged from Finder onto Stays. Finder, Tailscale and Ghostty stay by default.
 
 ## Permissions
 

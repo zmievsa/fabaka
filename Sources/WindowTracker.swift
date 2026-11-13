@@ -120,6 +120,9 @@ final class WindowTracker {
                 self?.frontAppChanged(app)
             }
         }
+        NotificationCenter.default.addObserver(forName: .residentsChanged, object: nil, queue: .main) { [weak self] _ in
+            self?.publish()
+        }
         center.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             if let app = NSWorkspace.shared.frontmostApplication { self?.frontAppChanged(app) }
         }
@@ -128,7 +131,7 @@ final class WindowTracker {
     // MARK: - Reading (any thread)
 
     /// Windows in Recency order, minus any the WindowServer no longer has and any the app ordered out, then
-    /// the Dock's apps that have no windows left, most recently used first.
+    /// the Dock's apps that have no windows left, most recently used first, minus Resident apps.
     func snapshot() -> [WindowSnapshot] {
         lock.lock()
         var list = published
@@ -181,7 +184,7 @@ final class WindowTracker {
             return WindowSnapshot(wid: wid, pid: window.pid, element: window.element, title: window.title,
                                   isMinimized: window.isMinimized, app: info.app, appName: info.name, icon: info.icon)
         }
-        let appList = appRecency.compactMap { apps[$0] }
+        let appList = appRecency.compactMap { apps[$0] }.filter { !Residents.shared.contains($0.app) }
         lock.lock()
         published = list
         publishedApps = appList

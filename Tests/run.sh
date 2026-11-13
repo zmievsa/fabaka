@@ -133,6 +133,21 @@ test__switcher__when_app_is_frozen_while_flick_starts__should_list_the_app_so_yo
     kill -CONT $(pgrep -x BusyApp)
 }
 
+test__switcher__when_app_with_no_windows_is_resident__should_leave_it_out() {
+    # Only this key is touched, and put back as it was: absent, or the user's own list.
+    local saved=$(defaults read com.zmievsa.flick residentBundleIDs 2>/dev/null | tr -d ' ,()"' | grep . | tr '\n' ' ')
+    defaults write com.zmievsa.flick residentBundleIDs -array com.zmievsa.flick.test.busyapp
+    touch $WORK/unready
+    launch_busy_app "Resident app $RANDOM" $WORK/unready && start_flick && wait_until_flick_watches_busy_app || { fail $0; }
+    local rows=$(switcher_rows)
+    if [[ -z "$saved" ]]; then
+        defaults delete com.zmievsa.flick residentBundleIDs
+    else
+        defaults write com.zmievsa.flick residentBundleIDs -array $(echo $saved)
+    fi
+    [[ -n "$rows" && "$rows" != *"BusyApp (no windows)"* ]] && print "PASS $0" || fail "$0: resident listed in: $rows"
+}
+
 test__switcher__when_app_is_frozen_longer_than_a_minute_while_flick_starts__should_list_its_window_once_it_answers() {
     local title="Frozen app $RANDOM"
     launch_busy_app "$title" || { fail $0; return; }

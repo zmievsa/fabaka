@@ -1,6 +1,6 @@
 import Cocoa
 
-/// The only "settings" Flick has. Taken from the user's AltTab exceptions.
+/// Fixed rules, taken from the user's AltTab exceptions. Resident apps are the one list Settings edits.
 enum Rules {
     /// Excluded apps: their windows never appear.
     static let excludedBundleIDs: Set<String> = [
