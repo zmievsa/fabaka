@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "flick",
+  "project_id": "6ea9c0f5-f051-4d42-b97f-8b17fad78333"
+}
