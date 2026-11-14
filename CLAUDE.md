@@ -1,3 +1,8 @@
+This codebase is yours: what it's for is user's call and how it's built is your call, and you'll keep building on it.
+When you finish any work, commit, push, and deploy it without asking.
+
+- Commit, push to `main` and release on every finalized change. To release the app, bump `CFBundleShortVersionString` in `Info.plist` and run `make release`. To deploy the site (`site/public`), run `just deploy`, then check the live page at https://fabaka.dev.
+
 # Project Instructions for AI Agents
 
 This file provides instructions and context for AI coding agents working on this project.
