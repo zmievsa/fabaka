@@ -3,6 +3,10 @@ When you finish any work, commit, push, and deploy it without asking.
 
 - Commit, push to `main` and release on every finalized change. To release the app, bump `CFBundleShortVersionString` in `Info.plist` and run `make release`. To deploy the site (`site/public`), run `just deploy`, then check the live page at https://fabaka.dev.
 
+## Build & Test
+
+Run `just` to list the routine commands: `build`, `install`, `test`, `logs`, `release`, `deploy`.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:46cd31e7 -->
 ## Beads Issue Tracker
 
